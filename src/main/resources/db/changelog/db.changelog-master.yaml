@@ -2,3 +2,6 @@ databaseChangeLog:
   - include:
       file: changes/001-identity.xml
       relativeToChangelogFile: true
+  - include:
+      file: changes/002-idempotency.xml
+      relativeToChangelogFile: true

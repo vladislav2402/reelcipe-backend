@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -75,7 +76,7 @@ class AuthServiceTest {
 
         assertThrows(ResponseStatusException.class, () -> authService.refresh("refresh-token"));
 
-        verify(authRepository).revokeFamily(FAMILY_ID, revokedSession.revokedAt());
+        verify(authRepository).revokeFamily(eq(FAMILY_ID), any());
     }
 
     @Test

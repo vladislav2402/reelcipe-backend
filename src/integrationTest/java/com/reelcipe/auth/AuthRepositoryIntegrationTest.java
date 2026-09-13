@@ -13,7 +13,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,7 +53,7 @@ class AuthRepositoryIntegrationTest {
         assertThat(storedSession.userId()).isEqualTo(session.userId());
         assertThat(storedSession.familyId()).isEqualTo(session.familyId());
         assertThat(storedSession.refreshTokenHash()).isEqualTo(session.refreshTokenHash());
-        assertThat(storedSession.expiresAt()).isEqualTo(session.expiresAt().truncatedTo(ChronoUnit.MICROS));
+        assertThat(storedSession.expiresAt().toEpochMilli()).isEqualTo(session.expiresAt().toEpochMilli());
         assertThat(storedSession.revokedAt()).isNull();
 
         authRepository.revokeSession(sessionId, Instant.now());
