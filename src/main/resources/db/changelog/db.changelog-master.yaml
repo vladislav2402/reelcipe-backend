@@ -8,3 +8,9 @@ databaseChangeLog:
   - include:
       file: changes/003-sync.xml
       relativeToChangelogFile: true
+  - include:
+      file: changes/004-recipes.xml
+      relativeToChangelogFile: true
+  - include:
+      file: changes/005-recipe-preview.xml
+      relativeToChangelogFile: true
