@@ -1,0 +1,36 @@
+# Gradle and compiled output (keep Gradle Wrapper files in Git)
+.gradle/
+build/
+out/
+*.class
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.factorypath
+.vscode/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+/config/local-overrides.properties
+.local/
+
+# Runtime logs and JVM diagnostics
+logs/
+*.log
+*.hprof
+hs_err_pid*
+replay_pid*
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
