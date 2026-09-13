@@ -1,0 +1,61 @@
+name: reelcipe-local
+
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:?Set a pinned PostgreSQL 17 image}
+    environment:
+      POSTGRES_DB: reelcipe
+      POSTGRES_USER: reelcipe
+      POSTGRES_PASSWORD: reelcipe_local
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  s3mock:
+    image: ${S3MOCK_IMAGE:?Set a pinned Adobe S3Mock 5.x image}
+    environment:
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: reelcipe-local
+      COM_ADOBE_TESTING_S3MOCK_STORE_ROOT: /s3mockroot
+      COM_ADOBE_TESTING_S3MOCK_STORE_RETAIN_FILES_ON_EXIT: "true"
+    ports:
+      - "${S3_BIND_ADDRESS:-127.0.0.1}:9090:9090"
+    volumes:
+      - s3-data:/s3mockroot
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/favicon.ico"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  media-tools:
+    image: reelcipe-media-tools:local
+    build:
+      context: ./media-tools
+    command: ["sleep", "infinity"]
+    network_mode: none
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    volumes:
+      - ../.local/media-work:/work
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    healthcheck:
+      test: ["CMD", "ffprobe", "-version"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  postgres-data:
+  s3-data:
