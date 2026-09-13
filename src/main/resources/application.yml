@@ -36,6 +36,11 @@ app:
     apple-sign-in: ${APP_FEATURE_APPLE_SIGN_IN:false}
     subscriptions: ${APP_FEATURE_SUBSCRIPTIONS:false}
     enabled-link-platforms: ${APP_ENABLED_LINK_PLATFORMS:}
+  auth:
+    jwt-secret: ${APP_JWT_SECRET:reelcipe-local-jwt-secret-change-before-production-32bytes}
+    issuer: ${APP_JWT_ISSUER:reelcipe-local}
+    access-token-ttl-seconds: ${APP_ACCESS_TOKEN_TTL_SECONDS:900}
+    refresh-token-ttl-seconds: ${APP_REFRESH_TOKEN_TTL_SECONDS:2592000}
 
 springdoc:
   api-docs:

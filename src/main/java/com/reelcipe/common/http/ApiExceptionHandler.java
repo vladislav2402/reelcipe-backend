@@ -1,20 +1,24 @@
 package com.reelcipe.common.http;
 
-import java.util.List;
-
 import jakarta.servlet.http.HttpServletRequest;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.util.List;
+
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiProblem> validation(
@@ -39,8 +43,15 @@ public class ApiExceptionHandler {
                 request, List.of());
     }
 
+    @ExceptionHandler(ResponseStatusException.class)
+    ResponseEntity<ApiProblem> status(ResponseStatusException exception, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.valueOf(exception.getStatusCode().value());
+        return problem(status, status.getReasonPhrase(), exception.getReason(), request, List.of());
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiProblem> unexpected(Exception ignored, HttpServletRequest request) {
+        LOGGER.error("Unhandled API error for {}", request.getRequestURI(), ignored);
         return problem(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error",
                 "The request could not be completed", request, List.of());
     }
