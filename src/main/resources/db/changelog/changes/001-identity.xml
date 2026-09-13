@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="001-users" author="reelcipe">
+        <createTable tableName="users">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="users_pk"/>
+            </column>
+            <column name="apple_subject" type="VARCHAR(255)"/>
+            <column name="display_name" type="VARCHAR(200)"/>
+            <column name="status" type="VARCHAR(32)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deletion_requested_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="users" indexName="users_apple_subject_uq" unique="true">
+            <column name="apple_subject"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="002-auth-challenges" author="reelcipe">
+        <createTable tableName="auth_challenges">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="auth_challenges_pk"/>
+            </column>
+            <column name="user_id" type="UUID"/>
+            <column name="challenge_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="purpose" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="consumed_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="auth_challenges"
+                baseColumnNames="user_id"
+                constraintName="auth_challenges_user_fk"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+        <createIndex tableName="auth_challenges" indexName="auth_challenges_expiry_idx">
+            <column name="expires_at"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="003-auth-sessions" author="reelcipe">
+        <createTable tableName="auth_sessions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="auth_sessions_pk"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="family_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="refresh_token_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_seen_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revoked_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="auth_sessions"
+                baseColumnNames="user_id"
+                constraintName="auth_sessions_user_fk"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+        <createIndex tableName="auth_sessions" indexName="auth_sessions_refresh_token_hash_uq" unique="true">
+            <column name="refresh_token_hash"/>
+        </createIndex>
+        <createIndex tableName="auth_sessions" indexName="auth_sessions_user_idx">
+            <column name="user_id"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+        <createIndex tableName="auth_sessions" indexName="auth_sessions_family_idx">
+            <column name="family_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

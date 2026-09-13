@@ -18,6 +18,9 @@ Services:
 - S3Mock: `http://localhost:9090`, bucket `reelcipe-local`;
 - media-tools: internal container with FFmpeg/ffprobe and no network access.
 
+The Java processes launched from IDEA are intentionally not part of this Compose file.
+Start `Reelcipe API (local)` and `Reelcipe Worker (local)` separately from IDEA.
+
 For Java processes started from IDEA, use `localhost:5432` and `http://localhost:9090`.
 
 ## Stop
