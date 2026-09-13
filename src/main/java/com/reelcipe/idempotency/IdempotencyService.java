@@ -47,9 +47,15 @@ public class IdempotencyService {
             Supplier<IdempotencyResult> command) {
         validate(userId, operation, target, idempotencyKey);
         Instant now = Instant.now();
-        IdempotencyRequest request = repository.lockOrCreate(new IdempotencyRequest(
+        IdempotencyRequest candidate = new IdempotencyRequest(
                 UUID.randomUUID(), userId, operation, target, idempotencyKey,
-                canonicalBodyHash(requestBody), null, null, null, now.plus(retention), null));
+                canonicalBodyHash(requestBody), null, null, null, now.plus(retention), null);
+        repository.upsertIfExpired(candidate.id(), candidate.userId(), candidate.operation(), candidate.target(),
+                candidate.idempotencyKey(), candidate.requestHash(), candidate.expiresAt());
+        IdempotencyRequest request = repository
+                .findLockedByUserIdAndOperationAndTargetAndIdempotencyKey(
+                        userId, operation, target, idempotencyKey)
+                .orElseThrow();
 
         if (!request.requestHash().equals(canonicalBodyHash(requestBody))) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Idempotency key was used with another request body");
@@ -59,7 +65,7 @@ public class IdempotencyService {
         }
 
         IdempotencyResult result = command.get();
-        repository.complete(request.id(), result, Instant.now());
+        repository.complete(request.id(), result.status(), result.body(), result.contentType(), Instant.now());
         return result;
     }
 

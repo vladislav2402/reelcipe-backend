@@ -2,6 +2,8 @@ package com.reelcipe.sync;
 
 import com.reelcipe.sync.domain.SyncChange;
 import com.reelcipe.sync.domain.SyncChangeRepository;
+import com.reelcipe.sync.domain.UserSyncState;
+import com.reelcipe.sync.domain.UserSyncStateRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,9 +16,11 @@ import java.util.UUID;
 public class SyncChangeService {
 
     private final SyncChangeRepository repository;
+    private final UserSyncStateRepository stateRepository;
 
-    public SyncChangeService(SyncChangeRepository repository) {
+    public SyncChangeService(SyncChangeRepository repository, UserSyncStateRepository stateRepository) {
         this.repository = repository;
+        this.stateRepository = stateRepository;
     }
 
     @Transactional
@@ -27,10 +31,13 @@ public class SyncChangeService {
             String operation,
             long version) {
         validate(userId, entityType, entityId, operation, version);
-        long sequence = repository.lockAndIncrementSequence(userId);
+        stateRepository.ensureExists(userId);
+        UserSyncState state = stateRepository.findLocked(userId).orElseThrow();
+        long sequence = state.increment();
+        stateRepository.save(state);
         SyncChange change = new SyncChange(
                 UUID.randomUUID(), userId, entityType, entityId, operation, version, sequence, Instant.now());
-        repository.append(change);
+        repository.save(change);
         return change;
     }
 
@@ -39,7 +46,7 @@ public class SyncChangeService {
         if (userId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is required");
         }
-        return repository.currentSequence(userId);
+        return stateRepository.findById(userId).map(UserSyncState::lastSequence).orElse(0L);
     }
 
     private void validate(UUID userId, String entityType, UUID entityId, String operation, long version) {

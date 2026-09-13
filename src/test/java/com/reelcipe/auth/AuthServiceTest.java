@@ -52,27 +52,27 @@ class AuthServiceTest {
         AuthService.TokenPair result = authService.devLogin("alice");
 
         assertEquals("access-token", result.accessToken());
-        verify(authRepository).create(any(UserSession.class));
+        verify(authRepository).save(any(UserSession.class));
     }
 
     @Test
     void refreshRevokesCurrentSessionAndCreatesRotatedSession() {
         UserSession session = activeSession();
-        when(authRepository.findByRefreshHash(any())).thenReturn(Optional.of(session));
+        when(authRepository.findLockedByRefreshTokenHash(any())).thenReturn(Optional.of(session));
         when(tokenService.issueAccessToken(any(), any(), any())).thenReturn("rotated-access-token");
 
         AuthService.TokenPair result = authService.refresh("refresh-token");
 
         assertEquals("rotated-access-token", result.accessToken());
         verify(authRepository).revokeSession(any(), any());
-        verify(authRepository).create(any(UserSession.class));
+        verify(authRepository).save(any(UserSession.class));
     }
 
     @Test
     void reusedRefreshTokenRevokesItsFamily() {
         UserSession revokedSession = new UserSession(
                 SESSION_ID, USER_ID, FAMILY_ID, "hash", Instant.now().plusSeconds(60), Instant.now());
-        when(authRepository.findByRefreshHash(any())).thenReturn(Optional.of(revokedSession));
+        when(authRepository.findLockedByRefreshTokenHash(any())).thenReturn(Optional.of(revokedSession));
 
         assertThrows(ResponseStatusException.class, () -> authService.refresh("refresh-token"));
 
@@ -82,7 +82,7 @@ class AuthServiceTest {
     @Test
     void requireActiveSessionChecksSessionAndUser() {
         when(authRepository.findById(SESSION_ID)).thenReturn(Optional.of(activeSession()));
-        when(userRepository.isActive(USER_ID)).thenReturn(true);
+        when(userRepository.countByIdAndStatus(eq(USER_ID), eq(com.reelcipe.auth.domain.UserStatus.ACTIVE))).thenReturn(1L);
 
         AuthenticatedUser result = authService.requireActiveSession(
                 new JwtTokenService.AuthenticatedToken(USER_ID, SESSION_ID));

@@ -2,6 +2,7 @@ package com.reelcipe.auth;
 
 import com.reelcipe.auth.domain.AuthenticatedUser;
 import com.reelcipe.auth.domain.UserProfile;
+import com.reelcipe.auth.domain.UserStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -42,7 +43,7 @@ class AuthControllerTest {
     void meReturnsProfile() {
         AuthController controller = new AuthController(authService, tokenService);
         AuthenticatedUser user = new AuthenticatedUser(UUID.randomUUID(), UUID.randomUUID());
-        UserProfile profile = new UserProfile(user.userId(), "Alice", "ACTIVE", Instant.now());
+        UserProfile profile = new UserProfile(user.userId(), "Alice", UserStatus.ACTIVE, Instant.now());
         when(authService.profile(user)).thenReturn(profile);
 
         AuthController.MeResponse response = controller.me(user);

@@ -1,84 +1,55 @@
 package com.reelcipe.idempotency.domain;
 
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Repository;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
-@Repository
-public class IdempotencyRepository {
+public interface IdempotencyRepository extends JpaRepository<IdempotencyRequest, UUID> {
 
-    private final NamedParameterJdbcTemplate jdbcTemplate;
-    private final IdempotencyRequestRowMapper rowMapper;
+    @Modifying
+    @Transactional
+    @Query(value = """
+            INSERT INTO idempotency_requests
+                (id, user_id, operation, target, idempotency_key, request_hash, expires_at)
+            VALUES (:id, :userId, :operation, :target, :idempotencyKey, :requestHash, :expiresAt)
+            ON CONFLICT (user_id, operation, target, idempotency_key) DO UPDATE
+            SET id = EXCLUDED.id, request_hash = EXCLUDED.request_hash,
+                response_status = NULL, response_body = NULL, response_content_type = NULL,
+                expires_at = EXCLUDED.expires_at, completed_at = NULL
+            WHERE idempotency_requests.expires_at <= CURRENT_TIMESTAMP
+            """, nativeQuery = true)
+    int upsertIfExpired(@Param("id") UUID id, @Param("userId") UUID userId,
+            @Param("operation") String operation, @Param("target") String target,
+            @Param("idempotencyKey") String idempotencyKey, @Param("requestHash") String requestHash,
+            @Param("expiresAt") Instant expiresAt);
 
-    public IdempotencyRepository(
-            NamedParameterJdbcTemplate jdbcTemplate,
-            IdempotencyRequestRowMapper rowMapper) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.rowMapper = rowMapper;
-    }
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT request FROM IdempotencyRequest request
+            WHERE request.userId = :userId AND request.operation = :operation
+              AND request.target = :target AND request.idempotencyKey = :idempotencyKey
+            """)
+    Optional<IdempotencyRequest> findLockedByUserIdAndOperationAndTargetAndIdempotencyKey(
+            @Param("userId") UUID userId, @Param("operation") String operation,
+            @Param("target") String target, @Param("idempotencyKey") String idempotencyKey);
 
-    public IdempotencyRequest lockOrCreate(IdempotencyRequest request) {
-        jdbcTemplate.update("""
-                INSERT INTO idempotency_requests
-                    (id, user_id, operation, target, idempotency_key, request_hash, expires_at)
-                VALUES (:id, :userId, :operation, :target, :idempotencyKey, :requestHash, :expiresAt)
-                ON CONFLICT (user_id, operation, target, idempotency_key) DO UPDATE
-                SET id = EXCLUDED.id,
-                    request_hash = EXCLUDED.request_hash,
-                    response_status = NULL,
-                    response_body = NULL,
-                    response_content_type = NULL,
-                    expires_at = EXCLUDED.expires_at,
-                    completed_at = NULL
-                WHERE idempotency_requests.expires_at <= CURRENT_TIMESTAMP
-                """, new MapSqlParameterSource()
-                .addValue("id", request.id())
-                .addValue("userId", request.userId())
-                .addValue("operation", request.operation())
-                .addValue("target", request.target())
-                .addValue("idempotencyKey", request.idempotencyKey())
-                .addValue("requestHash", request.requestHash())
-                .addValue("expiresAt", Timestamp.from(request.expiresAt())));
+    @Modifying
+    @Transactional
+    @Query("""
+            UPDATE IdempotencyRequest request
+            SET request.responseStatus = :status, request.responseBody = :body,
+                request.responseContentType = :contentType, request.completedAt = :completedAt
+            WHERE request.id = :id
+            """)
+    void complete(@Param("id") UUID id, @Param("status") int status, @Param("body") String body,
+            @Param("contentType") String contentType, @Param("completedAt") Instant completedAt);
 
-        return jdbcTemplate.query("""
-                        SELECT id, user_id, operation, target, idempotency_key, request_hash,
-                               response_status, response_body, response_content_type,
-                               expires_at, completed_at
-                        FROM idempotency_requests
-                        WHERE user_id = :userId
-                          AND operation = :operation
-                          AND target = :target
-                          AND idempotency_key = :idempotencyKey
-                        FOR UPDATE
-                        """,
-                Map.of(
-                        "userId", request.userId(),
-                        "operation", request.operation(),
-                        "target", request.target(),
-                        "idempotencyKey", request.idempotencyKey()), rowMapper)
-                .stream()
-                .findFirst()
-                .orElseThrow();
-    }
-
-    public void complete(UUID requestId, IdempotencyResult result, Instant completedAt) {
-        jdbcTemplate.update("""
-                UPDATE idempotency_requests
-                SET response_status = :responseStatus,
-                    response_body = :responseBody,
-                    response_content_type = :responseContentType,
-                    completed_at = :completedAt
-                WHERE id = :id
-                """, new MapSqlParameterSource()
-                .addValue("id", requestId)
-                .addValue("responseStatus", result.status())
-                .addValue("responseBody", result.body())
-                .addValue("responseContentType", result.contentType())
-                .addValue("completedAt", Timestamp.from(completedAt)));
-    }
 }

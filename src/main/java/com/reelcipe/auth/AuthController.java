@@ -2,6 +2,7 @@ package com.reelcipe.auth;
 
 import com.reelcipe.auth.domain.AuthenticatedUser;
 import com.reelcipe.auth.domain.UserProfile;
+import com.reelcipe.auth.domain.UserStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -84,6 +85,6 @@ public class AuthController {
         }
     }
 
-    public record MeResponse(UUID id, String displayName, String status, Instant createdAt) {
+    public record MeResponse(UUID id, String displayName, UserStatus status, Instant createdAt) {
     }
 }

@@ -45,9 +45,9 @@ class AuthRepositoryIntegrationTest {
         UserSession session = new UserSession(
                 sessionId, userId, familyId, "refresh-hash", Instant.now().plusSeconds(3600), null);
 
-        authRepository.create(session);
+        authRepository.save(session);
 
-        assertThat(userRepository.isActive(userId)).isTrue();
+        assertThat(userRepository.countByIdAndStatus(userId, com.reelcipe.auth.domain.UserStatus.ACTIVE)).isEqualTo(1L);
         UserSession storedSession = authRepository.findById(sessionId).orElseThrow();
         assertThat(storedSession.id()).isEqualTo(session.id());
         assertThat(storedSession.userId()).isEqualTo(session.userId());

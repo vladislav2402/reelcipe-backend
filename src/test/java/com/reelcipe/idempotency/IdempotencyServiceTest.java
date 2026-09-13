@@ -47,7 +47,8 @@ class IdempotencyServiceTest {
     @Test
     void completedRequestReturnsStoredResponseWithoutExecutingCommand() {
         IdempotencyRequest stored = request("{\"a\":1}", new IdempotencyResult(201, "created", "application/json"));
-        when(repository.lockOrCreate(any())).thenReturn(stored);
+        when(repository.findLockedByUserIdAndOperationAndTargetAndIdempotencyKey(
+                any(), any(), any(), any())).thenReturn(java.util.Optional.of(stored));
         AtomicInteger executions = new AtomicInteger();
 
         IdempotencyResult result = service.execute(
@@ -63,7 +64,8 @@ class IdempotencyServiceTest {
 
     @Test
     void differentBodyWithSameScopeIsConflict() {
-        when(repository.lockOrCreate(any())).thenReturn(request("{\"a\":1}", null));
+        when(repository.findLockedByUserIdAndOperationAndTargetAndIdempotencyKey(
+                any(), any(), any(), any())).thenReturn(java.util.Optional.of(request("{\"a\":1}", null)));
 
         assertThrows(ResponseStatusException.class, () -> service.execute(
                 USER_ID, "recipe.create", "recipe", "key-1", "{\"a\":2}",
@@ -72,14 +74,17 @@ class IdempotencyServiceTest {
 
     @Test
     void newRequestExecutesAndStoresResult() {
-        when(repository.lockOrCreate(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(repository.findLockedByUserIdAndOperationAndTargetAndIdempotencyKey(
+                any(), any(), any(), any())).thenReturn(java.util.Optional.of(request("{\"a\":1}", null)));
         IdempotencyResult expected = new IdempotencyResult(201, "created", "application/json");
 
         IdempotencyResult result = service.execute(
                 USER_ID, "recipe.create", "recipe", "key-1", "{\"a\":1}", () -> expected);
 
         assertEquals(expected, result);
-        verify(repository).complete(any(), org.mockito.ArgumentMatchers.eq(expected), any());
+        verify(repository).complete(any(), org.mockito.ArgumentMatchers.eq(expected.status()),
+                org.mockito.ArgumentMatchers.eq(expected.body()),
+                org.mockito.ArgumentMatchers.eq(expected.contentType()), any());
     }
 
     private IdempotencyRequest request(String body, IdempotencyResult result) {

@@ -2,6 +2,8 @@ package com.reelcipe.sync;
 
 import com.reelcipe.sync.domain.SyncChange;
 import com.reelcipe.sync.domain.SyncChangeRepository;
+import com.reelcipe.sync.domain.UserSyncState;
+import com.reelcipe.sync.domain.UserSyncStateRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,24 +25,27 @@ class SyncChangeServiceTest {
     @Mock
     private SyncChangeRepository repository;
 
+    @Mock
+    private UserSyncStateRepository stateRepository;
+
     private SyncChangeService service;
 
     @BeforeEach
     void setUp() {
-        service = new SyncChangeService(repository);
+        service = new SyncChangeService(repository, stateRepository);
     }
 
     @Test
     void recordAllocatesSequenceBeforeAppendingChange() {
         UUID userId = UUID.randomUUID();
         UUID recipeId = UUID.randomUUID();
-        when(repository.lockAndIncrementSequence(userId)).thenReturn(7L);
+        when(stateRepository.findLocked(userId)).thenReturn(java.util.Optional.of(new UserSyncState(userId)));
 
         SyncChange result = service.record(userId, "recipe", recipeId, "UPDATE", 3);
 
-        assertEquals(7L, result.sequence());
+        assertEquals(1L, result.sequence());
         assertEquals(3L, result.version());
-        verify(repository).append(any(SyncChange.class));
+        verify(repository).save(any(SyncChange.class));
     }
 
     @Test
@@ -52,8 +57,8 @@ class SyncChangeServiceTest {
     @Test
     void watermarkDelegatesToRepository() {
         UUID userId = UUID.randomUUID();
-        when(repository.currentSequence(userId)).thenReturn(4L);
+        when(stateRepository.findById(userId)).thenReturn(java.util.Optional.empty());
 
-        assertEquals(4L, service.captureWatermark(userId));
+        assertEquals(0L, service.captureWatermark(userId));
     }
 }

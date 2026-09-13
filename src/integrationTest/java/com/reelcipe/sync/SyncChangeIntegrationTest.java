@@ -81,7 +81,7 @@ class SyncChangeIntegrationTest {
                     throw new RuntimeException("rollback");
                 }))).hasMessage("rollback");
 
-        assertThat(repository.countByUser(userId)).isZero();
+        assertThat(repository.countByUserId(userId)).isZero();
         assertThat(syncChangeService.captureWatermark(userId)).isZero();
     }
 }

@@ -47,7 +47,7 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token is required");
         }
         Instant now = Instant.now();
-        UserSession current = sessions.findByRefreshHash(TokenHash.sha256(refreshToken))
+        UserSession current = sessions.findLockedByRefreshTokenHash(TokenHash.sha256(refreshToken))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
         if (!current.isActive(now)) {
             sessions.revokeFamily(current.familyId(), now);
@@ -65,14 +65,18 @@ public class AuthService {
     public AuthenticatedUser requireActiveSession(JwtTokenService.AuthenticatedToken token) {
         UserSession session = sessions.findById(token.sessionId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Session is not active"));
-        if (!session.isActive(Instant.now()) || !session.userId().equals(token.userId()) || !users.isActive(token.userId())) {
+        if (!session.isActive(Instant.now()) || !session.userId().equals(token.userId())
+                || users.countByIdAndStatus(token.userId(), com.reelcipe.auth.domain.UserStatus.ACTIVE) != 1) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Session is not active");
         }
         return new AuthenticatedUser(token.userId(), token.sessionId());
     }
 
     public UserProfile profile(AuthenticatedUser user) {
-        return users.findActiveProfile(user.userId()).orElse(null);
+        return users.findByIdAndStatus(user.userId(), com.reelcipe.auth.domain.UserStatus.ACTIVE)
+                .map(profile -> new UserProfile(
+                        profile.getId(), profile.getDisplayName(), profile.getStatus(), profile.getCreatedAt()))
+                .orElse(null);
     }
 
     private TokenPair createSession(UUID userId) {
@@ -84,7 +88,7 @@ public class AuthService {
         String refreshToken = randomToken();
         UserSession session = new UserSession(userId, familyId, TokenHash.sha256(refreshToken),
                 now.plusSeconds(refreshTokenTtlSeconds));
-        sessions.create(session);
+        sessions.save(session);
         return new TokenPair(tokens.issueAccessToken(userId, session.id(), now), refreshToken);
     }
 

@@ -1,10 +1,13 @@
 package com.reelcipe.auth;
 
+import com.reelcipe.auth.domain.User;
+import com.reelcipe.auth.domain.UserRepository;
+import com.reelcipe.auth.domain.UserStatus;
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Profile;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Component
@@ -14,26 +17,22 @@ public class FixtureUserInitializer {
     public static final UUID ALICE_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
     public static final UUID BOB_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
 
-    private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final UserRepository users;
 
-    public FixtureUserInitializer(NamedParameterJdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public FixtureUserInitializer(UserRepository users) {
+        this.users = users;
     }
 
     @PostConstruct
     void ensureFixtureUsers() {
-        insertIfMissing(ALICE_ID, "fixture-alice", "Fixture Alice");
-        insertIfMissing(BOB_ID, "fixture-bob", "Fixture Bob");
+        saveIfMissing(ALICE_ID, "Fixture Alice");
+        saveIfMissing(BOB_ID, "Fixture Bob");
     }
 
-    private void insertIfMissing(UUID id, String appleSubject, String displayName) {
-        jdbcTemplate.update("""
-                INSERT INTO users (id, apple_subject, display_name, status)
-                VALUES (:id, :appleSubject, :displayName, 'ACTIVE')
-                ON CONFLICT (id) DO NOTHING
-                """, java.util.Map.of(
-                "id", id,
-                "appleSubject", appleSubject,
-                "displayName", displayName));
+    private void saveIfMissing(UUID id, String displayName) {
+        if (users.findById(id).isEmpty()) {
+            Instant now = Instant.now();
+            users.save(new User(id, displayName, UserStatus.ACTIVE, now, now));
+        }
     }
 }
