@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.Timestamp;
 import java.util.UUID;
 
 @Component
@@ -19,7 +19,7 @@ public class UserSessionRowMapper implements RowMapper<UserSession> {
                 .addValue("userId", userSession.userId())
                 .addValue("familyId", userSession.familyId())
                 .addValue("refreshTokenHash", userSession.refreshTokenHash())
-                .addValue("expiresAt", userSession.expiresAt(), Types.TIMESTAMP_WITH_TIMEZONE);
+                .addValue("expiresAt", Timestamp.from(userSession.expiresAt()));
     }
 
     @Override
