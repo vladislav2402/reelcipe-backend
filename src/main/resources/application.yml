@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: reelcipe-backend
+  profiles:
+    default: local
+
+server:
+  port: ${SERVER_PORT:8080}
+
+app:
+  role: ${APP_ROLE:api}
+  instance-id: ${APP_INSTANCE_ID:${random.uuid}}
+  providers:
+    mode: ${APP_PROVIDERS_MODE:mock}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: worker
+
+server:
+  port: ${SERVER_PORT:8081}
+
+app:
+  role: ${APP_ROLE:worker}
