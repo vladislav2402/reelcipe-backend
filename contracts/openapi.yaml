@@ -1,0 +1,70 @@
+openapi: 3.1.0
+info:
+  title: Reelcipe API
+  version: v1
+  description: REST contract for the Reelcipe backend.
+servers:
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+paths:
+  /v1/config:
+    get:
+      security: []
+      summary: Get client configuration
+      operationId: getConfig
+      responses:
+        '200':
+          description: Runtime limits and feature flags
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuntimeConfig'
+        '500':
+          $ref: '#/components/responses/Problem'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RuntimeConfig:
+      type: object
+      required: [application, role, profile, limits, featureFlags]
+      properties:
+        application: { type: string }
+        role: { type: string, enum: [api] }
+        profile: { type: string }
+        instanceId: { type: string }
+        providersMode: { type: string, enum: [mock, real] }
+        limits:
+          type: object
+          additionalProperties: { type: integer, format: int64 }
+        featureFlags:
+          type: object
+          additionalProperties: true
+    Problem:
+      type: object
+      required: [type, title, status, detail, instance, traceId]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer, format: int32 }
+        detail: { type: string }
+        instance: { type: string }
+        traceId: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
+  responses:
+    Problem:
+      description: Problem response
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'

@@ -25,6 +25,23 @@ app:
   instance-id: ${APP_INSTANCE_ID:${random.uuid}}
   providers:
     mode: ${APP_PROVIDERS_MODE:mock}
+  limits:
+    max-media-duration-seconds: ${APP_MAX_MEDIA_DURATION_SECONDS:180}
+    max-video-size-bytes: ${APP_MAX_VIDEO_SIZE_BYTES:104857600}
+    max-audio-size-bytes: ${APP_MAX_AUDIO_SIZE_BYTES:20971520}
+    max-description-characters: ${APP_MAX_DESCRIPTION_CHARACTERS:20000}
+    max-active-imports-per-user: ${APP_MAX_ACTIVE_IMPORTS_PER_USER:2}
+  features:
+    share-extension: ${APP_FEATURE_SHARE_EXTENSION:false}
+    apple-sign-in: ${APP_FEATURE_APPLE_SIGN_IN:false}
+    subscriptions: ${APP_FEATURE_SUBSCRIPTIONS:false}
+    enabled-link-platforms: ${APP_ENABLED_LINK_PLATFORMS:}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
 
 management:
   endpoints:
