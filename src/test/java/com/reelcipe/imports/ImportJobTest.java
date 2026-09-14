@@ -66,6 +66,43 @@ class ImportJobTest {
         assertNull(job.getRecipeCheckpointRef());
     }
 
+    @Test
+    void claimChangesQueuedJobToItsResumeStageAndFencesIt() {
+        ImportJob job = job(ImportStatus.QUEUED);
+
+        job.claimForProcessing("worker-a", NOW.plusSeconds(90), CLOCK);
+
+        assertEquals(ImportStatus.RESOLVING, job.getStatus());
+        assertEquals("worker-a", job.getLeaseOwner());
+        assertEquals(1, job.getLeaseVersion());
+        assertEquals(NOW.plusSeconds(90), job.getLeaseUntil());
+        assertNull(job.getNextAttemptAt());
+    }
+
+    @Test
+    void claimRejectsWaitingForUploadAndTerminalJobs() {
+        ImportJob upload = new ImportJob(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                ImportSourceType.UPLOAD,
+                null,
+                null,
+                "video.mp4",
+                "video/mp4",
+                100L,
+                null,
+                "hash-v1",
+                ImportStatus.AWAITING_UPLOAD,
+                ImportStage.RESOLVING,
+                NOW.plusSeconds(3600),
+                NOW.plusSeconds(86400),
+                NOW);
+
+        assertThrows(IllegalStateException.class, () -> upload.claimForProcessing(
+                "worker-a", NOW.plusSeconds(90), CLOCK));
+    }
+
     private ImportJob job(ImportStatus status) {
         return new ImportJob(
                 UUID.randomUUID(),

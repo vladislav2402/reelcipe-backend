@@ -170,6 +170,23 @@ public class ImportJob {
         }
     }
 
+    public void claimForProcessing(String owner, Instant leaseUntil, Clock clock) {
+        if (owner == null || owner.isBlank() || leaseUntil == null) {
+            throw new IllegalArgumentException("Import lease data is required");
+        }
+        if (!isClaimableStatus(status)) {
+            throw new IllegalStateException("Import is not claimable: " + status);
+        }
+        if (status == ImportStatus.QUEUED || status == ImportStatus.RETRY_WAIT) {
+            status = ImportStatus.valueOf(resumeStage.name());
+        }
+        leaseOwner = owner;
+        leaseVersion++;
+        this.leaseUntil = leaseUntil;
+        nextAttemptAt = null;
+        updatedAt = clock.instant();
+    }
+
     public void scheduleRetry(Instant nextAttempt, String error, Clock clock) {
         if (!isActiveStage(status)) {
             throw new IllegalStateException("Only active stages can be retried");
@@ -237,6 +254,11 @@ public class ImportJob {
         return value == ImportStatus.RESOLVING || value == ImportStatus.EXTRACTING_AUDIO
                 || value == ImportStatus.TRANSCRIBING || value == ImportStatus.EXTRACTING_RECIPE
                 || value == ImportStatus.VALIDATING;
+    }
+
+    private boolean isClaimableStatus(ImportStatus value) {
+        return value == ImportStatus.QUEUED || value == ImportStatus.RETRY_WAIT
+                || isActiveStage(value);
     }
 
     private boolean isTerminal(ImportStatus value) {

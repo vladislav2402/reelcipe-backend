@@ -23,6 +23,12 @@ server:
 app:
   role: ${APP_ROLE:api}
   instance-id: ${APP_INSTANCE_ID:${random.uuid}}
+  worker:
+    enabled: ${APP_WORKER_ENABLED:true}
+    execution-slots: ${APP_WORKER_EXECUTION_SLOTS:2}
+    lease-duration: ${APP_WORKER_LEASE_DURATION:PT90S}
+    poll-interval-ms: ${APP_WORKER_POLL_INTERVAL_MS:1000}
+    heartbeat-interval-ms: ${APP_WORKER_HEARTBEAT_INTERVAL_MS:20000}
   providers:
     mode: ${APP_PROVIDERS_MODE:mock}
   limits:
