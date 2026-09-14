@@ -17,3 +17,6 @@ databaseChangeLog:
   - include:
       file: changes/006-recipe-library.xml
       relativeToChangelogFile: true
+  - include:
+      file: changes/007-shopping.xml
+      relativeToChangelogFile: true
