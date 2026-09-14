@@ -37,3 +37,8 @@ Feature: Reelcipe API
   Scenario: Protected resources reject anonymous requests
     When I request the current user without authentication
     Then the response status is 403
+
+  Scenario: Current user exposes local quota
+    Given I am authenticated as "alice"
+    When I request the current user
+    Then the current user quota has limit 10 and remaining 10

@@ -243,6 +243,21 @@ public class ReelcipeApiSteps {
         lastResponse = exchange("GET", "/v1/me", null, false, null);
     }
 
+    @When("I request the current user")
+    public void currentUser() {
+        AuthClient.Response response = authClient.getCurrentUser();
+        lastResponse = new Response(response.status(), response.body(), null);
+    }
+
+    @Then("the current user quota has limit {int} and remaining {int}")
+    public void currentUserQuota(int limit, int remaining) {
+        assertThat(lastResponse.status()).isEqualTo(200);
+        JsonNode quota = json(lastResponse.body()).get("quota");
+        assertThat(quota.get("plan").asText()).isEqualTo("FREE");
+        assertThat(quota.get("limit").asInt()).isEqualTo(limit);
+        assertThat(quota.get("remaining").asInt()).isEqualTo(remaining);
+    }
+
     @Then("the response status is {int}")
     public void responseStatus(int status) {
         assertThat(lastResponse.status()).isEqualTo(status);

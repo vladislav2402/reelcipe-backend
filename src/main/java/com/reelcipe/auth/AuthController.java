@@ -3,10 +3,12 @@ package com.reelcipe.auth;
 import com.reelcipe.auth.domain.AuthenticatedUser;
 import com.reelcipe.auth.domain.UserProfile;
 import com.reelcipe.auth.domain.UserStatus;
+import com.reelcipe.billing.QuotaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,10 +25,17 @@ public class AuthController {
 
     private final AuthService authService;
     private final JwtTokenService tokenService;
+    private final QuotaService quotaService;
 
-    public AuthController(AuthService authService, JwtTokenService tokenService) {
+    @Autowired
+    public AuthController(AuthService authService, JwtTokenService tokenService, QuotaService quotaService) {
         this.authService = authService;
         this.tokenService = tokenService;
+        this.quotaService = quotaService;
+    }
+
+    public AuthController(AuthService authService, JwtTokenService tokenService) {
+        this(authService, tokenService, null);
     }
 
     @PostMapping("/auth/dev")
@@ -58,7 +67,10 @@ public class AuthController {
         if (profile == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is not active");
         }
-        return new MeResponse(profile.id(), profile.displayName(), profile.status(), profile.createdAt());
+        QuotaService.QuotaSnapshot quota = quotaService == null
+                ? null
+                : quotaService.current(profile.id());
+        return new MeResponse(profile.id(), profile.displayName(), profile.status(), profile.createdAt(), quota);
     }
 
     private AuthenticatedUser requireUser(AuthenticatedUser user) {
@@ -85,6 +97,11 @@ public class AuthController {
         }
     }
 
-    public record MeResponse(UUID id, String displayName, UserStatus status, Instant createdAt) {
+    public record MeResponse(
+            UUID id,
+            String displayName,
+            UserStatus status,
+            Instant createdAt,
+            QuotaService.QuotaSnapshot quota) {
     }
 }

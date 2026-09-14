@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+    <changeSet id="015-quotas" author="reelcipe">
+        <createTable tableName="usage_periods">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="usage_periods_pk"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="period_start" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quota_limit" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reserved" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="consumed" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="usage_periods" baseColumnNames="user_id"
+                                 constraintName="usage_periods_user_fk" referencedTableName="users"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="usage_periods" columnNames="user_id, period_start"
+                             constraintName="usage_periods_user_period_uq"/>
+
+        <createTable tableName="quota_reservations">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="quota_reservations_pk"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="import_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="period_start" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="generation" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="units" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="state" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="quota_reservations" baseColumnNames="user_id"
+                                 constraintName="quota_reservations_user_fk" referencedTableName="users"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="quota_reservations" columnNames="import_id, generation"
+                             constraintName="quota_reservations_import_generation_uq"/>
+        <sql>
+            CREATE UNIQUE INDEX quota_reservations_active_uq
+            ON quota_reservations (import_id)
+            WHERE state = 'RESERVED'
+        </sql>
+        <createIndex tableName="quota_reservations" indexName="quota_reservations_period_idx">
+            <column name="user_id"/>
+            <column name="period_start"/>
+        </createIndex>
+
+        <createTable tableName="usage_ledger">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="usage_ledger_pk"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="import_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reservation_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="period_start" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="operation" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="units" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="usage_ledger" baseColumnNames="user_id"
+                                 constraintName="usage_ledger_user_fk" referencedTableName="users"
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="usage_ledger" baseColumnNames="reservation_id"
+                                 constraintName="usage_ledger_reservation_fk" referencedTableName="quota_reservations"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="usage_ledger" columnNames="reservation_id, operation"
+                             constraintName="usage_ledger_reservation_operation_uq"/>
+        <createIndex tableName="usage_ledger" indexName="usage_ledger_user_period_idx">
+            <column name="user_id"/>
+            <column name="period_start"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
