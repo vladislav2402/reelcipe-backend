@@ -20,6 +20,22 @@ The project has one codebase and two launch roles:
 .\gradlew.bat bootRun --args='--app.role=worker --server.port=8081 --spring.profiles.active=worker'
 ```
 
+## E2E tests
+
+E2E tests use an already running API and do not start Spring Boot, PostgreSQL or Testcontainers.
+Start the API separately, then run:
+
+```powershell
+.\gradlew.bat e2eTest
+```
+
+For another API URL:
+
+```powershell
+$env:E2E_BASE_URL = 'http://localhost:9090'
+.\gradlew.bat e2eTest
+```
+
 The API diagnostic endpoint is `GET /v1/config`. Both roles expose Actuator health; the worker does not expose `/v1/config`.
 
 Provider integrations and persistence are intentionally not part of B01.

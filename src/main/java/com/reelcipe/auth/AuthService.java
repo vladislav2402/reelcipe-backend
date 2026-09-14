@@ -33,12 +33,24 @@ public class AuthService {
 
     @Transactional
     public TokenPair devLogin(String fixture) {
-        UUID userId = switch (fixture.trim().toLowerCase()) {
+        String username = fixture == null ? "" : fixture.trim();
+        if (username.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dev username is required");
+        }
+
+        UUID userId = switch (username.toLowerCase()) {
             case "alice", "fixture-alice" -> FixtureUserInitializer.ALICE_ID;
             case "bob", "fixture-bob" -> FixtureUserInitializer.BOB_ID;
-            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown fixture user");
+            default -> createDevUser(username);
         };
         return createSession(userId);
+    }
+
+    private UUID createDevUser(String username) {
+        UUID userId = UUID.randomUUID();
+        Instant now = Instant.now();
+        users.save(new User(userId, username, UserStatus.ACTIVE, now, now));
+        return userId;
     }
 
     @Transactional
