@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+    <changeSet id="012-recipe-library" author="reelcipe">
+        <sql>CREATE EXTENSION IF NOT EXISTS pg_trgm</sql>
+        <sql>
+            CREATE INDEX recipes_library_cursor_idx
+            ON recipes (user_id, updated_at DESC, id DESC)
+            WHERE library_state = 'SAVED' AND deleted_at IS NULL
+        </sql>
+        <sql>
+            CREATE INDEX recipes_title_trgm_idx
+            ON recipes USING gin (LOWER(title) gin_trgm_ops)
+        </sql>
+        <sql>
+            CREATE INDEX recipe_ingredients_name_trgm_idx
+            ON recipe_ingredients USING gin (LOWER(name) gin_trgm_ops)
+        </sql>
+    </changeSet>
+</databaseChangeLog>

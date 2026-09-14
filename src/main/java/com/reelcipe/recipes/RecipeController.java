@@ -47,6 +47,17 @@ public class RecipeController {
         return ResponseEntity.ok().eTag(etag(recipe.version())).body(recipe);
     }
 
+    @GetMapping
+    @Operation(summary = "List and search saved recipes")
+    public ResponseEntity<RecipePage> list(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "30") int limit) {
+        RecipePage page = service.list(requireUser(user).userId(), q, limit, cursor);
+        return ResponseEntity.ok(page);
+    }
+
     @PatchMapping("/{recipeId}")
     @Operation(summary = "Edit a recipe")
     public ResponseEntity<RecipeView> patch(

@@ -6,14 +6,18 @@ import com.reelcipe.idempotency.IdempotencyService;
 import com.reelcipe.idempotency.domain.IdempotencyResult;
 import com.reelcipe.recipes.domain.*;
 import com.reelcipe.sync.SyncChangeService;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -49,6 +53,28 @@ public class RecipeService {
     public RecipeView get(UUID userId, UUID recipeId) {
         Recipe recipe = recipes.findByIdAndUserIdAndDeletedAtIsNull(recipeId, userId).orElseThrow(this::notFound);
         return view(recipe);
+    }
+
+    @Transactional(readOnly = true)
+    public RecipePage list(UUID userId, String search, int requestedLimit, String cursor) {
+        int limit = validateLimit(requestedLimit);
+        String normalizedSearch = normalizeSearch(search);
+        CursorPayload payload = decodeCursor(cursor);
+        validateCursor(payload, normalizedSearch);
+        PageRequest pageRequest = PageRequest.of(0, limit + 1);
+        List<Recipe> recipesPage = payload == null
+                ? recipes.findLibrary(userId, RecipeLibraryState.SAVED, normalizedSearch, pageRequest)
+                : recipes.findLibraryAfter(
+                        userId,
+                        RecipeLibraryState.SAVED,
+                        normalizedSearch,
+                        Instant.parse(payload.updatedAt()),
+                        payload.id(),
+                        pageRequest);
+        boolean hasNext = recipesPage.size() > limit;
+        List<Recipe> page = hasNext ? recipesPage.subList(0, limit) : recipesPage;
+        String nextCursor = hasNext ? encodeCursor(normalizedSearch, page.get(page.size() - 1)) : null;
+        return new RecipePage(page.stream().map(this::view).toList(), nextCursor);
     }
 
     @Transactional
@@ -90,9 +116,15 @@ public class RecipeService {
         return view(recipe);
     }
 
-    private <T> T executeMutation(UUID userId, UUID recipeId, String key, String operation, Object body, java.util.function.Supplier<RecipeView> action) {
+    private RecipeView executeMutation(
+            UUID userId,
+            UUID recipeId,
+            String key,
+            String operation,
+            Object body,
+            java.util.function.Supplier<RecipeView> action) {
         IdempotencyResult result = idempotency.execute(userId, operation, recipeId.toString(), key, json(body), () -> IdempotencyResult.ok(json(action.get())));
-        return readJson(result.body(), (Class<T>) RecipeView.class);
+        return readJson(result.body(), RecipeView.class);
     }
 
     private Recipe locked(UUID userId, UUID id, long expected) {
@@ -186,6 +218,59 @@ public class RecipeService {
         return new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found");
     }
 
+    private int validateLimit(int requestedLimit) {
+        if (requestedLimit < 1 || requestedLimit > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Limit must be between 1 and 100");
+        }
+        return requestedLimit;
+    }
+
+    private String normalizeSearch(String search) {
+        if (search == null || search.isBlank()) {
+            return null;
+        }
+        return search.trim();
+    }
+
+    private CursorPayload decodeCursor(String cursor) {
+        if (cursor == null) {
+            return null;
+        }
+        try {
+            String json = new String(Base64.getUrlDecoder().decode(cursor));
+            CursorPayload payload = objectMapper.readValue(json, CursorPayload.class);
+            if (payload.version() != 1 || payload.id() == null || payload.updatedAt() == null
+                    || !"updated_at_desc,id_desc".equals(payload.sort())) {
+                throw new IllegalArgumentException("Invalid cursor fields");
+            }
+            Instant.parse(payload.updatedAt());
+            return payload;
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid recipe cursor", exception);
+        }
+    }
+
+    private void validateCursor(CursorPayload payload, String search) {
+        if (payload != null && !Objects.equals(payload.search(), search)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cursor does not match search parameters");
+        }
+    }
+
+    private String encodeCursor(String search, Recipe recipe) {
+        CursorPayload payload = new CursorPayload(
+                1,
+                search,
+                "updated_at_desc,id_desc",
+                recipe.getUpdatedAt().toString(),
+                recipe.getId());
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException("Unable to create recipe cursor", exception);
+        }
+    }
+
     public record RecipeCommand(String title, RecipeLanguage language,
                                 List<IngredientCommand> ingredients, List<StepCommand> steps) {
     }
@@ -211,5 +296,11 @@ public class RecipeService {
     }
 
     public record StepView(UUID id, int position, String text) {
+    }
+
+    public record RecipePage(List<RecipeView> items, String nextCursor) {
+    }
+
+    private record CursorPayload(int version, String search, String sort, String updatedAt, UUID id) {
     }
 }

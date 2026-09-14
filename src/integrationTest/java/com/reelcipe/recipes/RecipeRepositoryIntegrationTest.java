@@ -5,6 +5,7 @@ import com.reelcipe.recipes.domain.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -12,6 +13,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,5 +55,29 @@ class RecipeRepositoryIntegrationTest {
         assertThat(ingredients.findByRecipeIdOrderByPosition(recipeId)).hasSize(1);
         assertThat(steps.findByRecipeIdOrderByPosition(recipeId)).hasSize(1);
         assertThat(revisions.count()).isPositive();
+    }
+
+    @Test
+    void librarySearchReturnsEachMatchingRecipeOnceAndKeepsOwnership() {
+        Instant now = Instant.now();
+        UUID recipeId = UUID.randomUUID();
+        recipes.save(new Recipe(recipeId, FixtureUserInitializer.ALICE_ID, "Dinner", RecipeLanguage.EN, null,
+                RecipeAnalysisMode.MANUAL, RecipeLibraryState.SAVED, now));
+        ingredients.save(new RecipeIngredient(UUID.randomUUID(), recipeId, 0, "Salt", null, null, "g", "salt"));
+        ingredients.save(new RecipeIngredient(UUID.randomUUID(), recipeId, 1, "Sea salt", null, null, "g", "sea salt"));
+
+        List<Recipe> aliceResults = recipes.findLibrary(
+                FixtureUserInitializer.ALICE_ID,
+                RecipeLibraryState.SAVED,
+                "salt",
+                PageRequest.of(0, 30));
+        List<Recipe> bobResults = recipes.findLibrary(
+                FixtureUserInitializer.BOB_ID,
+                RecipeLibraryState.SAVED,
+                "salt",
+                PageRequest.of(0, 30));
+
+        assertThat(aliceResults).extracting(Recipe::getId).containsExactly(recipeId);
+        assertThat(bobResults).isEmpty();
     }
 }

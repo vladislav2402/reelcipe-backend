@@ -8,9 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,5 +43,31 @@ class RecipeServiceTest {
 
         assertThrows(ResponseStatusException.class, () -> service.patch(userId, recipeId, 2,
                 "key", new RecipeService.RecipePatch("New", RecipeLanguage.EN, null, null)));
+    }
+
+    @Test
+    void listRejectsCursorWithDifferentSearch() {
+        RecipeService service = new RecipeService(recipes, ingredients, steps, revisions, idempotency, sync,
+                new ObjectMapper());
+        UUID userId = UUID.randomUUID();
+        Recipe recipe = new Recipe(UUID.randomUUID(), userId, "Pasta", RecipeLanguage.EN, null,
+                RecipeAnalysisMode.MANUAL, RecipeLibraryState.SAVED, Instant.now());
+        when(recipes.findLibrary(any(), any(), any(), any(Pageable.class)))
+                .thenReturn(List.of(recipe, recipe));
+        when(ingredients.findByRecipeIdOrderByPosition(any())).thenReturn(List.of());
+        when(steps.findByRecipeIdOrderByPosition(any())).thenReturn(List.of());
+
+        RecipeService.RecipePage firstPage = service.list(userId, "pasta", 1, null);
+
+        assertThrows(ResponseStatusException.class,
+                () -> service.list(userId, "salt", 1, firstPage.nextCursor()));
+    }
+
+    @Test
+    void listRejectsLimitOutsideContract() {
+        RecipeService service = new RecipeService(recipes, ingredients, steps, revisions, idempotency, sync,
+                new ObjectMapper());
+
+        assertThrows(ResponseStatusException.class, () -> service.list(UUID.randomUUID(), null, 101, null));
     }
 }
