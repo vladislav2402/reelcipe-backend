@@ -42,3 +42,12 @@ Feature: Reelcipe API
     Given I am authenticated as "alice"
     When I request the current user
     Then the current user quota has limit 10 and remaining 10
+
+  Scenario: Creating an import is idempotent and pollable
+    Given I am authenticated as "alice"
+    When I create the same link import twice
+    Then the import is queued with one reserved quota unit
+    When I request the created import
+    Then the response status is 200
+    And I request the created import
+    And the import can be found in my import list

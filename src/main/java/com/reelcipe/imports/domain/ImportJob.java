@@ -50,6 +50,17 @@ public class ImportJob {
     @Column(name = "source_url")
     private String sourceUrl;
     @Enumerated(EnumType.STRING)
+    @Column(name = "media_kind")
+    private ImportMediaKind mediaKind;
+    @Column(name = "file_name")
+    private String fileName;
+    @Column(name = "content_type")
+    private String contentType;
+    @Column(name = "expected_size_bytes")
+    private Long expectedSizeBytes;
+    @Column(name = "description_text")
+    private String descriptionText;
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ImportStatus status;
     @Enumerated(EnumType.STRING)
@@ -101,11 +112,37 @@ public class ImportJob {
             Instant processingDeadlineAt,
             Instant inputDeadlineAt,
             Instant now) {
+        this(id, userId, clientRequestId, sourceType, sourceUrl, null, null, null, null, null,
+                inputHash, status, resumeStage, processingDeadlineAt, inputDeadlineAt, now);
+    }
+
+    public ImportJob(
+            UUID id,
+            UUID userId,
+            UUID clientRequestId,
+            ImportSourceType sourceType,
+            String sourceUrl,
+            ImportMediaKind mediaKind,
+            String fileName,
+            String contentType,
+            Long expectedSizeBytes,
+            String descriptionText,
+            String inputHash,
+            ImportStatus status,
+            ImportStage resumeStage,
+            Instant processingDeadlineAt,
+            Instant inputDeadlineAt,
+            Instant now) {
         this.id = id;
         this.userId = userId;
         this.clientRequestId = clientRequestId;
         this.sourceType = sourceType;
         this.sourceUrl = sourceUrl;
+        this.mediaKind = mediaKind;
+        this.fileName = fileName;
+        this.contentType = contentType;
+        this.expectedSizeBytes = expectedSizeBytes;
+        this.descriptionText = descriptionText;
         this.inputHash = inputHash;
         this.inputRevision = 1;
         this.status = status;
@@ -234,6 +271,26 @@ public class ImportJob {
 
     public String getSourceUrl() {
         return sourceUrl;
+    }
+
+    public ImportMediaKind getMediaKind() {
+        return mediaKind;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public Long getExpectedSizeBytes() {
+        return expectedSizeBytes;
+    }
+
+    public String getDescriptionText() {
+        return descriptionText;
     }
 
     public ImportStatus getStatus() {

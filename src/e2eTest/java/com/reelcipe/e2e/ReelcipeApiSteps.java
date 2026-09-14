@@ -30,10 +30,12 @@ public class ReelcipeApiSteps {
     private AuthClient authClient;
     private RecipeClient recipeClient;
     private ShoppingClient shoppingClient;
+    private ImportClient importClient;
     private String accessToken;
     private String refreshToken;
     private String recipeId;
     private String recipeVersion;
+    private String importId;
     private String idempotencyKey;
     private Response lastResponse;
 
@@ -43,6 +45,7 @@ public class ReelcipeApiSteps {
         refreshToken = null;
         recipeId = null;
         recipeVersion = null;
+        importId = null;
         idempotencyKey = null;
         lastResponse = null;
         createdRecipeIds.clear();
@@ -53,6 +56,7 @@ public class ReelcipeApiSteps {
         authClient = new AuthClient(client, objectMapper);
         recipeClient = new RecipeClient(client, objectMapper);
         shoppingClient = new ShoppingClient(client, objectMapper);
+        importClient = new ImportClient(client, objectMapper);
     }
 
     @After
@@ -104,6 +108,7 @@ public class ReelcipeApiSteps {
         authClient.setAccessToken(accessToken);
         recipeClient.setAccessToken(accessToken);
         shoppingClient.setAccessToken(accessToken);
+        importClient.setAccessToken(accessToken);
     }
 
     @When("I create a recipe with:")
@@ -256,6 +261,45 @@ public class ReelcipeApiSteps {
         assertThat(quota.get("plan").asText()).isEqualTo("FREE");
         assertThat(quota.get("limit").asInt()).isEqualTo(limit);
         assertThat(quota.get("remaining").asInt()).isEqualTo(remaining);
+    }
+
+    @When("I create the same link import twice")
+    public void createLinkImportTwice() {
+        UUID clientRequestId = UUID.randomUUID();
+        idempotencyKey = UUID.randomUUID().toString();
+        ImportClient.Response first = importClient.createLink(
+                clientRequestId, "https://example.com/e2e-video", idempotencyKey);
+        ImportClient.Response second = importClient.createLink(
+                clientRequestId, "https://example.com/e2e-video", idempotencyKey);
+        assertThat(first.status()).isEqualTo(202);
+        assertThat(second.status()).isEqualTo(202);
+        assertThat(json(first.body()).get("id").asText())
+                .isEqualTo(json(second.body()).get("id").asText());
+        importId = json(second.body()).get("id").asText();
+        lastResponse = new Response(second.status(), second.body(), null);
+    }
+
+    @Then("the import is queued with one reserved quota unit")
+    public void importQueuedWithQuota() {
+        JsonNode body = json(lastResponse.body());
+        assertThat(lastResponse.status()).isEqualTo(202);
+        assertThat(body.get("status").asText()).isEqualTo("QUEUED");
+        assertThat(body.get("pollAfterSeconds").asInt()).isEqualTo(2);
+        assertThat(body.at("/quota/reserved").asInt()).isEqualTo(1);
+        assertThat(body.at("/quota/remaining").asInt()).isEqualTo(9);
+    }
+
+    @When("I request the created import")
+    public void requestImport() {
+        ImportClient.Response response = importClient.get(importId);
+        lastResponse = new Response(response.status(), response.body(), null);
+    }
+
+    @Then("the import can be found in my import list")
+    public void importInList() {
+        ImportClient.Response response = importClient.list();
+        assertThat(response.status()).isEqualTo(200);
+        assertThat(json(response.body()).toString()).contains(importId);
     }
 
     @Then("the response status is {int}")

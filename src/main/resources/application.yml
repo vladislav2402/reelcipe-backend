@@ -31,6 +31,9 @@ app:
     max-audio-size-bytes: ${APP_MAX_AUDIO_SIZE_BYTES:20971520}
     max-description-characters: ${APP_MAX_DESCRIPTION_CHARACTERS:20000}
     max-active-imports-per-user: ${APP_MAX_ACTIVE_IMPORTS_PER_USER:2}
+  import:
+    upload-ttl: ${APP_IMPORT_UPLOAD_TTL:PT24H}
+    processing-ttl: ${APP_IMPORT_PROCESSING_TTL:PT48H}
   features:
     share-extension: ${APP_FEATURE_SHARE_EXTENSION:false}
     apple-sign-in: ${APP_FEATURE_APPLE_SIGN_IN:false}

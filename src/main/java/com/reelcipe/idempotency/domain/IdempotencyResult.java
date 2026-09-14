@@ -8,4 +8,8 @@ public record IdempotencyResult(int status, String body, String contentType) {
     public static IdempotencyResult created(String body) {
         return new IdempotencyResult(201, body, "application/json");
     }
+
+    public static IdempotencyResult accepted(String body) {
+        return new IdempotencyResult(202, body, "application/json");
+    }
 }
