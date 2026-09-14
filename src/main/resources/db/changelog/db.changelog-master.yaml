@@ -20,3 +20,6 @@ databaseChangeLog:
   - include:
       file: changes/007-shopping.xml
       relativeToChangelogFile: true
+  - include:
+      file: changes/008-imports.xml
+      relativeToChangelogFile: true

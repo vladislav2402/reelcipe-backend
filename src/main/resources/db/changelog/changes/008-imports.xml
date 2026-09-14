@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+    <changeSet id="014-imports" author="reelcipe">
+        <createTable tableName="import_jobs">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="import_jobs_pk"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_request_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="input_hash" type="VARCHAR(128)"/>
+            <column name="input_revision" type="BIGINT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_type" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_url" type="VARCHAR(2000)"/>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resume_stage" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attempts" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_attempt_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="lease_owner" type="VARCHAR(128)"/>
+            <column name="lease_version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lease_until" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="processing_deadline_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="input_deadline_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="error_code" type="VARCHAR(128)"/>
+            <column name="source_checkpoint_ref" type="VARCHAR(512)"/>
+            <column name="audio_checkpoint_ref" type="VARCHAR(512)"/>
+            <column name="transcript_checkpoint_ref" type="VARCHAR(512)"/>
+            <column name="recipe_checkpoint_ref" type="VARCHAR(512)"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="import_jobs" baseColumnNames="user_id"
+                                 constraintName="import_jobs_user_fk" referencedTableName="users"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="import_jobs" columnNames="user_id, client_request_id"
+                             constraintName="import_jobs_user_client_uq"/>
+        <createIndex tableName="import_jobs" indexName="import_jobs_user_created_idx">
+            <column name="user_id"/>
+            <column name="created_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+        <createIndex tableName="import_jobs" indexName="import_jobs_queue_idx">
+            <column name="status"/>
+            <column name="next_attempt_at"/>
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
