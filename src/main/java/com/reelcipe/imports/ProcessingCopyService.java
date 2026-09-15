@@ -46,11 +46,6 @@ public class ProcessingCopyService {
                         lease.importId(), MediaAssetType.SOURCE)
                 .orElseThrow(() -> permanent("SOURCE_ASSET_NOT_FOUND"));
         if (source.getProcessingKey() != null) {
-            persistence.checkpoint(
-                    lease,
-                    source.getProcessingKey(),
-                    source.getSha256(),
-                    source.getSizeBytes());
             return;
         }
         if (!control.isValid()) {

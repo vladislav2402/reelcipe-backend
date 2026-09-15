@@ -38,6 +38,7 @@ public class ProcessingCopyPersistence {
                 .orElseThrow(() -> new IllegalStateException("Source media asset was not found"));
         asset.recordProcessingCopy(processingKey, sha256, sizeBytes, clock);
         job.checkpoint(lease.stage(), processingKey, clock);
+        job.completeStage(lease.stage(), ImportStatus.EXTRACTING_AUDIO, clock);
         assets.save(asset);
         jobs.save(job);
     }

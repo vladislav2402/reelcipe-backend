@@ -71,6 +71,34 @@ public class MediaAsset {
         this.updatedAt = now;
     }
 
+    public static MediaAsset normalizedAudio(
+            UUID id,
+            UUID importId,
+            UUID userId,
+            String processingKey,
+            String sha256,
+            long sizeBytes,
+            int durationSeconds,
+            Instant expiresAt,
+            Instant now) {
+        MediaAsset asset = new MediaAsset(
+                id,
+                importId,
+                userId,
+                null,
+                MediaAssetType.NORMALIZED_AUDIO,
+                null,
+                sizeBytes,
+                "audio/flac",
+                expiresAt,
+                now);
+        asset.processingKey = processingKey;
+        asset.sha256 = sha256;
+        asset.durationSeconds = durationSeconds;
+        asset.status = MediaAssetStatus.READY;
+        return asset;
+    }
+
     public UUID getId() {
         return id;
     }

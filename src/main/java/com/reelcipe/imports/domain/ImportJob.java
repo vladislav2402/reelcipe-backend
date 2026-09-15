@@ -17,7 +17,8 @@ public class ImportJob {
             Map.entry(ImportStatus.QUEUED, EnumSet.of(ImportStatus.RESOLVING, ImportStatus.CANCELLED, ImportStatus.EXPIRED)),
             Map.entry(ImportStatus.RESOLVING, EnumSet.of(ImportStatus.EXTRACTING_AUDIO, ImportStatus.RETRY_WAIT,
                     ImportStatus.NEEDS_INPUT, ImportStatus.FAILED, ImportStatus.CANCELLED, ImportStatus.EXPIRED)),
-            Map.entry(ImportStatus.EXTRACTING_AUDIO, EnumSet.of(ImportStatus.TRANSCRIBING, ImportStatus.RETRY_WAIT,
+            Map.entry(ImportStatus.EXTRACTING_AUDIO, EnumSet.of(ImportStatus.TRANSCRIBING,
+                    ImportStatus.EXTRACTING_RECIPE, ImportStatus.RETRY_WAIT,
                     ImportStatus.FAILED, ImportStatus.CANCELLED, ImportStatus.EXPIRED)),
             Map.entry(ImportStatus.TRANSCRIBING, EnumSet.of(ImportStatus.EXTRACTING_RECIPE, ImportStatus.RETRY_WAIT,
                     ImportStatus.FAILED, ImportStatus.CANCELLED, ImportStatus.EXPIRED)),
@@ -91,6 +92,9 @@ public class ImportJob {
     private String sourceCheckpointRef;
     @Column(name = "audio_checkpoint_ref")
     private String audioCheckpointRef;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "audio_outcome")
+    private AudioOutcome audioOutcome;
     @Column(name = "transcript_checkpoint_ref")
     private String transcriptCheckpointRef;
     @Column(name = "recipe_checkpoint_ref")
@@ -269,6 +273,7 @@ public class ImportJob {
         if (newFile) {
             sourceCheckpointRef = null;
             audioCheckpointRef = null;
+            audioOutcome = null;
             transcriptCheckpointRef = null;
         }
         status = ImportStatus.QUEUED;
@@ -331,6 +336,26 @@ public class ImportJob {
             case EXTRACTING_RECIPE, VALIDATING -> recipeCheckpointRef = reference;
         }
         updatedAt = clock.instant();
+    }
+
+    public void recordAudioOutcome(AudioOutcome outcome, Clock clock) {
+        if (status != ImportStatus.EXTRACTING_AUDIO) {
+            throw new IllegalStateException("Audio outcome stage does not match status");
+        }
+        audioOutcome = outcome;
+        updatedAt = clock.instant();
+    }
+
+    public void completeStage(
+            ImportStage stage,
+            ImportStatus nextStatus,
+            Clock clock) {
+        if (status != ImportStatus.valueOf(stage.name())) {
+            throw new IllegalStateException("Stage does not match import status");
+        }
+        transitionTo(nextStatus, clock);
+        leaseOwner = null;
+        leaseUntil = null;
     }
 
     private boolean isActiveStage(ImportStatus value) {
@@ -452,6 +477,10 @@ public class ImportJob {
 
     public String getAudioCheckpointRef() {
         return audioCheckpointRef;
+    }
+
+    public AudioOutcome getAudioOutcome() {
+        return audioOutcome;
     }
 
     public String getTranscriptCheckpointRef() {

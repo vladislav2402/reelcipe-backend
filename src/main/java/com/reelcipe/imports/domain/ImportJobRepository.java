@@ -30,8 +30,8 @@ public interface ImportJobRepository extends JpaRepository<ImportJob, UUID> {
                     OR
                     (status IN ('RESOLVING', 'EXTRACTING_AUDIO', 'TRANSCRIBING',
                                 'EXTRACTING_RECIPE', 'VALIDATING')
-                     AND lease_until <= CURRENT_TIMESTAMP
-                         + CAST(:clockSkew AS interval))
+                     AND (lease_until IS NULL OR lease_until <= CURRENT_TIMESTAMP
+                         + CAST(:clockSkew AS interval)))
                   )
             ORDER BY next_attempt_at NULLS FIRST, created_at, id
             LIMIT 1

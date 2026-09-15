@@ -47,6 +47,7 @@ app:
     operations-retry-jitter-ratio: ${APP_WORKER_OPERATIONS_RETRY_JITTER_RATIO:0.2}
     processing-copy-temp-directory: ${APP_WORKER_PROCESSING_COPY_TEMP_DIRECTORY:${java.io.tmpdir}/reelcipe-processing}
     processing-copy-max-bytes: ${APP_WORKER_PROCESSING_COPY_MAX_BYTES:104857600}
+    media-concurrency: ${APP_WORKER_MEDIA_CONCURRENCY:1}
     upload-reconciler-interval-ms: ${APP_WORKER_UPLOAD_RECONCILER_INTERVAL_MS:30000}
     upload-reconciler-batch-size: ${APP_WORKER_UPLOAD_RECONCILER_BATCH_SIZE:20}
   providers:
@@ -70,6 +71,17 @@ app:
     secret-key: ${APP_STORAGE_SECRET_KEY:secretKey1}
     bucket: ${APP_STORAGE_BUCKET:reelcipe-local}
     path-style: ${APP_STORAGE_PATH_STYLE:true}
+  media-tools:
+    provider: ${APP_MEDIA_TOOLS_PROVIDER:compose}
+    compose-command: ${APP_MEDIA_TOOLS_COMPOSE_COMMAND:docker}
+    compose-env-file: ${APP_MEDIA_TOOLS_COMPOSE_ENV_FILE:infra/.env.local}
+    compose-file: ${APP_MEDIA_TOOLS_COMPOSE_FILE:infra/compose.local.yml}
+    compose-service: ${APP_MEDIA_TOOLS_COMPOSE_SERVICE:media-tools}
+    ffprobe-command: ${APP_MEDIA_TOOLS_FFPROBE_COMMAND:ffprobe}
+    ffmpeg-command: ${APP_MEDIA_TOOLS_FFMPEG_COMMAND:ffmpeg}
+    work-directory: ${APP_MEDIA_TOOLS_WORK_DIRECTORY:${user.dir}/.local/media-work}
+    timeout: ${APP_MEDIA_TOOLS_TIMEOUT:PT2M}
+    max-output-bytes: ${APP_MEDIA_TOOLS_MAX_OUTPUT_BYTES:65536}
   features:
     share-extension: ${APP_FEATURE_SHARE_EXTENSION:false}
     apple-sign-in: ${APP_FEATURE_APPLE_SIGN_IN:false}

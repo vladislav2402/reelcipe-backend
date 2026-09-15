@@ -80,7 +80,7 @@ class ProcessingCopyServiceTest {
         ImportLease lease = lease(importId, asset.getId(), 4);
         service(assets, storage, persistence, 1024).copy(lease, new ImportLeaseControl());
 
-        verify(persistence).checkpoint(eq(lease), eq("processing/existing"), eq("hash"), eq(4L));
+        verify(persistence, never()).checkpoint(any(), any(), any(), anyLong());
         verify(storage, never()).head(any());
         verify(storage, never()).open(any());
         verify(storage, never()).put(any(), any(), anyLong(), any());

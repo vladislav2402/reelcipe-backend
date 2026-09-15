@@ -107,8 +107,10 @@ class ProcessingCopyIntegrationTest {
         uploads.complete(userId, created.id(), url.uploadAttemptId());
         MediaAsset source = sourceAsset(url.uploadAttemptId());
 
-        ImportLease stale = queue.claimNext("old-worker").orElseThrow();
         ImportJob job = jobs.findById(created.id()).orElseThrow();
+        job.claimForProcessing("old-worker", Instant.now().plusSeconds(60), Clock.systemUTC());
+        jobs.saveAndFlush(job);
+        ImportLease stale = ImportLease.from(job);
         job.claimForProcessing("new-worker", Instant.now().plusSeconds(60), Clock.systemUTC());
         jobs.saveAndFlush(job);
 
