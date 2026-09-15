@@ -51,6 +51,9 @@ class ImportServiceTest {
     @Mock
     private QuotaService quota;
 
+    @Mock
+    private UploadService uploads;
+
     private ImportService service;
 
     @BeforeEach
@@ -61,6 +64,7 @@ class ImportServiceTest {
                 users,
                 idempotency,
                 quota,
+                uploads,
                 objectMapper,
                 Clock.fixed(NOW, ZoneOffset.UTC),
                 2,

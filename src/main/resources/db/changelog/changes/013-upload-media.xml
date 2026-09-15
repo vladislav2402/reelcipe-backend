@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+    <changeSet id="013-upload-media" author="reelcipe">
+        <createTable tableName="upload_attempts">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="upload_attempts_pk"/>
+            </column>
+            <column name="import_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attempt_number" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="staging_key" type="VARCHAR(1024)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="url_expires_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expected_size_bytes" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expected_content_type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(16)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="upload_attempts"
+                                 baseColumnNames="import_id"
+                                 constraintName="upload_attempts_import_fk"
+                                 referencedTableName="import_jobs"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="upload_attempts"
+                             columnNames="import_id, attempt_number"
+                             constraintName="upload_attempts_import_number_uq"/>
+        <addUniqueConstraint tableName="upload_attempts"
+                             columnNames="staging_key"
+                             constraintName="upload_attempts_staging_key_uq"/>
+        <createIndex tableName="upload_attempts" indexName="upload_attempts_reconcile_idx">
+            <column name="status"/>
+            <column name="expires_at"/>
+            <column name="created_at"/>
+        </createIndex>
+
+        <createTable tableName="media_assets">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="media_assets_pk"/>
+            </column>
+            <column name="import_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="upload_attempt_id" type="UUID"/>
+            <column name="asset_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(16)" defaultValue="ACCEPTED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="staging_key" type="VARCHAR(1024)"/>
+            <column name="processing_key" type="VARCHAR(1024)"/>
+            <column name="sha256" type="VARCHAR(64)"/>
+            <column name="size_bytes" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content_type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="duration_seconds" type="INT"/>
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="media_assets"
+                                 baseColumnNames="import_id"
+                                 constraintName="media_assets_import_fk"
+                                 referencedTableName="import_jobs"
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="media_assets"
+                                 baseColumnNames="upload_attempt_id"
+                                 constraintName="media_assets_upload_attempt_fk"
+                                 referencedTableName="upload_attempts"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="media_assets"
+                             columnNames="import_id, asset_type"
+                             constraintName="media_assets_import_type_uq"/>
+        <addUniqueConstraint tableName="media_assets"
+                             columnNames="upload_attempt_id"
+                             constraintName="media_assets_upload_attempt_uq"/>
+        <createIndex tableName="media_assets" indexName="media_assets_user_idx">
+            <column name="user_id"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

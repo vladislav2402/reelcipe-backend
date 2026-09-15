@@ -45,6 +45,8 @@ app:
     operations-retry-initial-delay: ${APP_WORKER_OPERATIONS_RETRY_INITIAL_DELAY:PT2S}
     operations-retry-maximum-delay: ${APP_WORKER_OPERATIONS_RETRY_MAXIMUM_DELAY:PT15M}
     operations-retry-jitter-ratio: ${APP_WORKER_OPERATIONS_RETRY_JITTER_RATIO:0.2}
+    upload-reconciler-interval-ms: ${APP_WORKER_UPLOAD_RECONCILER_INTERVAL_MS:30000}
+    upload-reconciler-batch-size: ${APP_WORKER_UPLOAD_RECONCILER_BATCH_SIZE:20}
   providers:
     mode: ${APP_PROVIDERS_MODE:mock}
   limits:
@@ -55,7 +57,17 @@ app:
     max-active-imports-per-user: ${APP_MAX_ACTIVE_IMPORTS_PER_USER:2}
   import:
     upload-ttl: ${APP_IMPORT_UPLOAD_TTL:PT24H}
+    upload-url-ttl: ${APP_IMPORT_UPLOAD_URL_TTL:PT1H}
+    max-upload-attempts: ${APP_IMPORT_MAX_UPLOAD_ATTEMPTS:3}
     processing-ttl: ${APP_IMPORT_PROCESSING_TTL:PT48H}
+  storage:
+    provider: ${APP_STORAGE_PROVIDER:s3}
+    endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9090}
+    region: ${APP_STORAGE_REGION:us-east-1}
+    access-key: ${APP_STORAGE_ACCESS_KEY:accessKey1}
+    secret-key: ${APP_STORAGE_SECRET_KEY:secretKey1}
+    bucket: ${APP_STORAGE_BUCKET:reelcipe-local}
+    path-style: ${APP_STORAGE_PATH_STYLE:true}
   features:
     share-extension: ${APP_FEATURE_SHARE_EXTENSION:false}
     apple-sign-in: ${APP_FEATURE_APPLE_SIGN_IN:false}

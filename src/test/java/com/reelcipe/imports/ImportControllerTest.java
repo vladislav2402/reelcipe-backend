@@ -28,6 +28,9 @@ class ImportControllerTest {
     @Mock
     private ImportLifecycleService lifecycle;
 
+    @Mock
+    private UploadService uploads;
+
     @Test
     void createsImportWithAcceptedStatus() {
         ImportController controller = new ImportController(service);
@@ -107,6 +110,28 @@ class ImportControllerTest {
                 new AuthenticatedUser(userId, UUID.randomUUID()), importId);
 
         assertThat(response.getHeaders().getFirst("Retry-After")).isNotBlank();
+    }
+
+    @Test
+    void createsUploadUrlThroughUploadService() {
+        ImportController controller = new ImportController(service, lifecycle, uploads);
+        UUID userId = UUID.randomUUID();
+        UUID importId = UUID.randomUUID();
+        UploadService.UploadUrlResponse expected = new UploadService.UploadUrlResponse(
+                importId,
+                UUID.randomUUID(),
+                "https://storage.example/upload",
+                Instant.now().plusSeconds(3600),
+                100,
+                "video/mp4");
+        when(uploads.getUploadUrl(userId, importId)).thenReturn(expected);
+
+        ResponseEntity<UploadService.UploadUrlResponse> response = controller.uploadUrl(
+                new AuthenticatedUser(userId, UUID.randomUUID()), importId);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(expected);
+        verify(uploads).getUploadUrl(userId, importId);
     }
 
     private ImportService.ImportView retryWaitView(UUID importId) {

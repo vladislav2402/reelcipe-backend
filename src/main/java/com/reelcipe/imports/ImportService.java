@@ -37,6 +37,7 @@ public class ImportService {
     private final UserRepository users;
     private final IdempotencyService idempotency;
     private final QuotaService quota;
+    private final UploadService uploads;
     private final ObjectMapper objectMapper;
     private final Clock clock;
     private final int maxActiveImports;
@@ -51,6 +52,7 @@ public class ImportService {
             UserRepository users,
             IdempotencyService idempotency,
             QuotaService quota,
+            UploadService uploads,
             ObjectMapper objectMapper,
             Clock clock,
             @Value("${app.limits.max-active-imports-per-user:2}") int maxActiveImports,
@@ -63,6 +65,7 @@ public class ImportService {
         this.users = users;
         this.idempotency = idempotency;
         this.quota = quota;
+        this.uploads = uploads;
         this.objectMapper = objectMapper;
         this.clock = clock;
         this.maxActiveImports = maxActiveImports;
@@ -126,6 +129,9 @@ public class ImportService {
                 upload ? ImportStatus.AWAITING_UPLOAD : ImportStatus.QUEUED,
                 ImportStage.RESOLVING, now.plus(processingTtl), upload ? now.plus(uploadTtl) : null, now);
         jobs.save(job);
+        if (upload) {
+            uploads.createInitialAttempt(job);
+        }
         quota.reserve(userId, job.getId());
         return view(job, quota.current(userId));
     }

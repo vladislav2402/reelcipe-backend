@@ -35,3 +35,6 @@ databaseChangeLog:
   - include:
       file: changes/012-operations.xml
       relativeToChangelogFile: true
+  - include:
+      file: changes/013-upload-media.xml
+      relativeToChangelogFile: true

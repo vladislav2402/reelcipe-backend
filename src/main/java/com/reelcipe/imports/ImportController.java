@@ -29,15 +29,24 @@ import java.util.UUID;
 public class ImportController {
     private final ImportService service;
     private final ImportLifecycleService lifecycle;
+    private final UploadService uploads;
 
     public ImportController(ImportService service) {
-        this(service, null);
+        this(service, null, null);
+    }
+
+    public ImportController(ImportService service, ImportLifecycleService lifecycle) {
+        this(service, lifecycle, null);
     }
 
     @Autowired
-    public ImportController(ImportService service, ImportLifecycleService lifecycle) {
+    public ImportController(
+            ImportService service,
+            ImportLifecycleService lifecycle,
+            UploadService uploads) {
         this.service = service;
         this.lifecycle = lifecycle;
+        this.uploads = uploads;
     }
 
     @PostMapping
@@ -86,6 +95,34 @@ public class ImportController {
         return ResponseEntity.ok(lifecycle.retry(requireUser(user).userId(), importId));
     }
 
+    @PostMapping("/{importId}/upload-url")
+    @Operation(summary = "Create a presigned upload URL")
+    public ResponseEntity<UploadService.UploadUrlResponse> uploadUrl(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable UUID importId) {
+        return ResponseEntity.ok(uploads.getUploadUrl(requireUser(user).userId(), importId));
+    }
+
+    @PostMapping("/{importId}/upload-complete")
+    @Operation(summary = "Confirm an uploaded object")
+    public ResponseEntity<UploadService.UploadCompletionResponse> uploadComplete(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable UUID importId,
+            @Valid @RequestBody UploadCompletionRequest request) {
+        return ResponseEntity.ok(uploads.complete(
+                requireUser(user).userId(), importId, request.uploadAttemptId()));
+    }
+
+    @PostMapping("/{importId}/attach-upload")
+    @Operation(summary = "Attach an uploaded object and queue the import")
+    public ResponseEntity<UploadService.UploadCompletionResponse> attachUpload(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable UUID importId,
+            @Valid @RequestBody UploadCompletionRequest request) {
+        return ResponseEntity.ok(uploads.attachUpload(
+                requireUser(user).userId(), importId, request.uploadAttemptId()));
+    }
+
     private AuthenticatedUser requireUser(AuthenticatedUser user) {
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication is required");
@@ -113,5 +150,8 @@ public class ImportController {
                     sizeBytes,
                     descriptionText);
         }
+    }
+
+    public record UploadCompletionRequest(@NotNull UUID uploadAttemptId) {
     }
 }
