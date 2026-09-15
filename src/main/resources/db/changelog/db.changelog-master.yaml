@@ -32,3 +32,6 @@ databaseChangeLog:
   - include:
       file: changes/011-import-retry-policy.xml
       relativeToChangelogFile: true
+  - include:
+      file: changes/012-operations.xml
+      relativeToChangelogFile: true

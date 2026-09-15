@@ -38,6 +38,13 @@ app:
     max-input-continuations: ${APP_WORKER_MAX_INPUT_CONTINUATIONS:3}
     expiry-interval-ms: ${APP_WORKER_EXPIRY_INTERVAL_MS:60000}
     expiry-batch-size: ${APP_WORKER_EXPIRY_BATCH_SIZE:20}
+    operations-interval-ms: ${APP_WORKER_OPERATIONS_INTERVAL_MS:60000}
+    operations-batch-size: ${APP_WORKER_OPERATIONS_BATCH_SIZE:20}
+    operations-lease-duration: ${APP_WORKER_OPERATIONS_LEASE_DURATION:PT90S}
+    operations-max-attempts: ${APP_WORKER_OPERATIONS_MAX_ATTEMPTS:8}
+    operations-retry-initial-delay: ${APP_WORKER_OPERATIONS_RETRY_INITIAL_DELAY:PT2S}
+    operations-retry-maximum-delay: ${APP_WORKER_OPERATIONS_RETRY_MAXIMUM_DELAY:PT15M}
+    operations-retry-jitter-ratio: ${APP_WORKER_OPERATIONS_RETRY_JITTER_RATIO:0.2}
   providers:
     mode: ${APP_PROVIDERS_MODE:mock}
   limits:
