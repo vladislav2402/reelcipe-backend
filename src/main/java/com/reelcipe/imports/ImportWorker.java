@@ -1,5 +1,6 @@
 package com.reelcipe.imports;
 
+import com.reelcipe.imports.domain.ImportFailure;
 import com.reelcipe.imports.domain.ImportLease;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.ObjectProvider;
@@ -22,6 +23,7 @@ import java.util.concurrent.Semaphore;
 public class ImportWorker {
     private final ImportQueue queue;
     private final ImportLeasePersistence persistence;
+    private final ImportRetryService retryService;
     private final ImportStageHandler handler;
     private final String workerId;
     private final Semaphore slots;
@@ -31,11 +33,13 @@ public class ImportWorker {
     public ImportWorker(
             ImportQueue queue,
             ImportLeasePersistence persistence,
+            ImportRetryService retryService,
             ObjectProvider<ImportStageHandler> handlers,
             @Value("${app.instance-id}") String workerId,
             @Value("${app.worker.execution-slots:2}") int executionSlots) {
         this.queue = queue;
         this.persistence = persistence;
+        this.retryService = retryService;
         this.handler = handlers.getIfAvailable(() -> (lease, control) -> {
         });
         this.workerId = workerId;
@@ -79,6 +83,12 @@ public class ImportWorker {
     private void execute(RunningLease runningLease) {
         try {
             handler.handle(runningLease.lease, runningLease.control);
+        } catch (ImportProcessingException exception) {
+            retryService.handle(runningLease.lease, exception.failure());
+        } catch (RuntimeException exception) {
+            retryService.handle(
+                    runningLease.lease,
+                    ImportFailure.transientError("UNEXPECTED_STAGE_ERROR"));
         } finally {
             running.remove(runningLease.lease.importId());
             slots.release();

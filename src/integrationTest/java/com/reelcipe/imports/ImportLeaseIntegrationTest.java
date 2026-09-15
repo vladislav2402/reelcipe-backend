@@ -26,7 +26,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         "app.role=worker",
         "spring.profiles.active=test",
         "app.worker.enabled=false",
-        "app.worker.lease-duration=PT2S"
+        "app.worker.lease-duration=PT2S",
+        "app.worker.clock-skew-tolerance=PT5S"
 })
 @Testcontainers
 class ImportLeaseIntegrationTest {

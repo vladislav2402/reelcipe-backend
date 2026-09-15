@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,9 +28,16 @@ import java.util.UUID;
 @SecurityRequirement(name = "bearerAuth")
 public class ImportController {
     private final ImportService service;
+    private final ImportLifecycleService lifecycle;
 
     public ImportController(ImportService service) {
+        this(service, null);
+    }
+
+    @Autowired
+    public ImportController(ImportService service, ImportLifecycleService lifecycle) {
         this.service = service;
+        this.lifecycle = lifecycle;
     }
 
     @PostMapping
@@ -51,7 +61,29 @@ public class ImportController {
     public ResponseEntity<ImportView> get(
             @AuthenticationPrincipal AuthenticatedUser user,
             @PathVariable UUID importId) {
-        return ResponseEntity.ok(service.get(requireUser(user).userId(), importId));
+        ImportView view = service.get(requireUser(user).userId(), importId);
+        ResponseEntity.BodyBuilder response = ResponseEntity.ok();
+        if (view.status() == com.reelcipe.imports.domain.ImportStatus.RETRY_WAIT && view.nextAttemptAt() != null) {
+            long retryAfter = Math.max(1, Duration.between(Instant.now(), view.nextAttemptAt()).toSeconds());
+            response.header("Retry-After", String.valueOf(retryAfter));
+        }
+        return response.body(view);
+    }
+
+    @PostMapping("/{importId}/cancel")
+    @Operation(summary = "Cancel an import job")
+    public ResponseEntity<ImportView> cancel(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable UUID importId) {
+        return ResponseEntity.ok(lifecycle.cancel(requireUser(user).userId(), importId));
+    }
+
+    @PostMapping("/{importId}/retry")
+    @Operation(summary = "Retry a failed import job")
+    public ResponseEntity<ImportView> retry(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable UUID importId) {
+        return ResponseEntity.ok(lifecycle.retry(requireUser(user).userId(), importId));
     }
 
     private AuthenticatedUser requireUser(AuthenticatedUser user) {

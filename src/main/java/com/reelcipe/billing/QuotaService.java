@@ -56,6 +56,23 @@ public class QuotaService {
         return finish(userId, reservationId, false);
     }
 
+    @Transactional
+    public boolean releaseImport(UUID userId, UUID importId) {
+        validateIds(userId, importId);
+        QuotaReservation reservation = reservations
+                .findTopByImportIdAndStateOrderByGenerationDesc(
+                        importId, QuotaReservationState.RESERVED)
+                .orElse(null);
+        if (reservation == null) {
+            return false;
+        }
+        if (!reservation.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Quota reservation not found");
+        }
+        finish(userId, reservation.getId(), false);
+        return true;
+    }
+
     private QuotaReservation reserve(UUID userId, UUID importId, int generation) {
         validateIds(userId, importId);
         QuotaPlan plan = entitlements.currentPlan(userId);

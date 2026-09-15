@@ -14,7 +14,7 @@ spring:
     hibernate:
       ddl-auto: validate
   liquibase:
-    enabled: true
+    enabled: ${LIQUIBASE_ENABLED:true}
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 server:
@@ -27,8 +27,17 @@ app:
     enabled: ${APP_WORKER_ENABLED:true}
     execution-slots: ${APP_WORKER_EXECUTION_SLOTS:2}
     lease-duration: ${APP_WORKER_LEASE_DURATION:PT90S}
+    clock-skew-tolerance: ${APP_WORKER_CLOCK_SKEW_TOLERANCE:PT1S}
     poll-interval-ms: ${APP_WORKER_POLL_INTERVAL_MS:1000}
     heartbeat-interval-ms: ${APP_WORKER_HEARTBEAT_INTERVAL_MS:20000}
+    max-stage-attempts: ${APP_WORKER_MAX_STAGE_ATTEMPTS:3}
+    retry-initial-delay: ${APP_WORKER_RETRY_INITIAL_DELAY:PT2S}
+    retry-maximum-delay: ${APP_WORKER_RETRY_MAXIMUM_DELAY:PT15M}
+    retry-jitter-ratio: ${APP_WORKER_RETRY_JITTER_RATIO:0.2}
+    input-wait-duration: ${APP_WORKER_INPUT_WAIT_DURATION:PT24H}
+    max-input-continuations: ${APP_WORKER_MAX_INPUT_CONTINUATIONS:3}
+    expiry-interval-ms: ${APP_WORKER_EXPIRY_INTERVAL_MS:60000}
+    expiry-batch-size: ${APP_WORKER_EXPIRY_BATCH_SIZE:20}
   providers:
     mode: ${APP_PROVIDERS_MODE:mock}
   limits:
@@ -72,8 +81,6 @@ spring:
   config:
     activate:
       on-profile: worker
-  liquibase:
-    enabled: false
 
 server:
   port: ${SERVER_PORT:8081}

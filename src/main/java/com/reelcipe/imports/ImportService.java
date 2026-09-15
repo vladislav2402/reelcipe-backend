@@ -130,7 +130,7 @@ public class ImportService {
         return view(job, quota.current(userId));
     }
 
-    private ImportView view(ImportJob job, QuotaService.QuotaSnapshot quotaSnapshot) {
+    ImportView view(ImportJob job, QuotaService.QuotaSnapshot quotaSnapshot) {
         boolean terminal = job.getStatus() == ImportStatus.READY
                 || job.getStatus() == ImportStatus.REVIEW_REQUIRED
                 || job.getStatus() == ImportStatus.FAILED
@@ -140,7 +140,8 @@ public class ImportService {
                 job.getId(), job.getClientRequestId(), job.getSourceType(), job.getSourceUrl(),
                 job.getMediaKind(), job.getFileName(), job.getContentType(), job.getExpectedSizeBytes(),
                 job.getDescriptionText(), job.getStatus(), job.getResumeStage(), job.getInputRevision(),
-                job.getAttempts(), job.getNextAttemptAt(), job.getProcessingDeadlineAt(),
+                job.getAttempts(), job.getAttemptStage(), job.getStageAttempts(),
+                job.getNextAttemptAt(), job.getProcessingDeadlineAt(),
                 job.getInputDeadlineAt(), job.getErrorCode(), job.getCreatedAt(), job.getUpdatedAt(),
                 job.getCompletedAt(), terminal ? null : 2, quotaSnapshot);
     }
@@ -169,7 +170,7 @@ public class ImportService {
         }
     }
 
-    private String json(Object value) {
+    String json(Object value) {
         try {
             return objectMapper.writeValueAsString(value);
         } catch (JsonProcessingException exception) {
@@ -177,7 +178,7 @@ public class ImportService {
         }
     }
 
-    private <T> T readJson(String value, Class<T> type) {
+    <T> T readJson(String value, Class<T> type) {
         try {
             return objectMapper.readValue(value, type);
         } catch (JsonProcessingException exception) {
@@ -220,6 +221,8 @@ public class ImportService {
             ImportStage resumeStage,
             long inputRevision,
             int attempts,
+            ImportStage attemptStage,
+            int stageAttempts,
             Instant nextAttemptAt,
             Instant processingDeadlineAt,
             Instant inputDeadlineAt,

@@ -26,6 +26,9 @@ class ImportWorkerTest {
     @Mock
     private ImportLeasePersistence persistence;
 
+    @Mock
+    private ImportRetryService retryService;
+
     @Test
     void handlerRunsOnExecutorAndHeartbeatCanFenceIt() throws Exception {
         UUID importId = UUID.randomUUID();
@@ -50,6 +53,7 @@ class ImportWorkerTest {
         ImportWorker worker = new ImportWorker(
                 queue,
                 persistence,
+                retryService,
                 provider(handler),
                 "worker-a",
                 1);

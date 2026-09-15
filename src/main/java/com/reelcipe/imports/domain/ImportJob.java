@@ -68,6 +68,11 @@ public class ImportJob {
     private ImportStage resumeStage;
     @Column(nullable = false)
     private int attempts;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "attempt_stage", nullable = false)
+    private ImportStage attemptStage;
+    @Column(name = "stage_attempts", nullable = false)
+    private int stageAttempts;
     @Column(name = "next_attempt_at")
     private Instant nextAttemptAt;
     @Column(name = "lease_owner")
@@ -147,6 +152,8 @@ public class ImportJob {
         this.inputRevision = 1;
         this.status = status;
         this.resumeStage = resumeStage;
+        this.attemptStage = resumeStage;
+        this.stageAttempts = 0;
         this.processingDeadlineAt = processingDeadlineAt;
         this.inputDeadlineAt = inputDeadlineAt;
         this.nextAttemptAt = status == ImportStatus.QUEUED ? now : null;
@@ -160,6 +167,12 @@ public class ImportJob {
         }
         status = target;
         updatedAt = clock.instant();
+        if (target == ImportStatus.RESOLVING || target == ImportStatus.EXTRACTING_AUDIO
+                || target == ImportStatus.TRANSCRIBING || target == ImportStatus.EXTRACTING_RECIPE
+                || target == ImportStatus.VALIDATING) {
+            attemptStage = ImportStage.valueOf(target.name());
+            stageAttempts = 0;
+        }
         if (isTerminal(target)) {
             completedAt = updatedAt;
             leaseOwner = null;
@@ -180,6 +193,11 @@ public class ImportJob {
         if (status == ImportStatus.QUEUED || status == ImportStatus.RETRY_WAIT) {
             status = ImportStatus.valueOf(resumeStage.name());
         }
+        ImportStage claimedStage = ImportStage.valueOf(status.name());
+        if (attemptStage != claimedStage) {
+            attemptStage = claimedStage;
+            stageAttempts = 0;
+        }
         leaseOwner = owner;
         leaseVersion++;
         this.leaseUntil = leaseUntil;
@@ -196,6 +214,10 @@ public class ImportJob {
         nextAttemptAt = nextAttempt;
         errorCode = error;
         attempts++;
+        attemptStage = resumeStage;
+        stageAttempts++;
+        leaseOwner = null;
+        leaseUntil = null;
         updatedAt = clock.instant();
     }
 
@@ -216,16 +238,33 @@ public class ImportJob {
         nextAttemptAt = clock.instant();
         errorCode = null;
         attempts = 0;
+        stageAttempts = 0;
         completedAt = null;
+        leaseOwner = null;
+        leaseUntil = null;
         updatedAt = nextAttemptAt;
     }
 
     public void changeInputRevision(String newInputHash, boolean newFile, Clock clock) {
+        changeInputRevision(newInputHash, descriptionText, newFile, null, Integer.MAX_VALUE, clock);
+    }
+
+    public void changeInputRevision(
+            String newInputHash,
+            String newDescriptionText,
+            boolean newFile,
+            Instant newInputDeadline,
+            int maxContinuations,
+            Clock clock) {
         if (status != ImportStatus.NEEDS_INPUT) {
             throw new IllegalStateException("Input can change only when import needs input");
         }
+        if (inputRevision > maxContinuations) {
+            throw new IllegalStateException("Maximum input continuations reached");
+        }
         inputRevision++;
         inputHash = newInputHash;
+        descriptionText = newDescriptionText;
         recipeCheckpointRef = null;
         if (newFile) {
             sourceCheckpointRef = null;
@@ -234,7 +273,51 @@ public class ImportJob {
         }
         status = ImportStatus.QUEUED;
         nextAttemptAt = clock.instant();
+        inputDeadlineAt = newInputDeadline;
+        attemptStage = resumeStage;
+        stageAttempts = 0;
+        errorCode = null;
+        leaseOwner = null;
+        leaseUntil = null;
         updatedAt = nextAttemptAt;
+    }
+
+    public void awaitInput(String error, Instant inputDeadline, Clock clock) {
+        if (!isActiveStage(status)) {
+            throw new IllegalStateException("Only active imports can await input");
+        }
+        transitionTo(ImportStatus.NEEDS_INPUT, clock);
+        errorCode = error;
+        inputDeadlineAt = inputDeadline;
+        leaseOwner = null;
+        leaseUntil = null;
+    }
+
+    public void fail(String error, Clock clock) {
+        if (!isActiveStage(status) && status != ImportStatus.RETRY_WAIT) {
+            throw new IllegalStateException("Only active imports can fail");
+        }
+        errorCode = error;
+        transitionTo(ImportStatus.FAILED, clock);
+    }
+
+    public void expire(Clock clock) {
+        if (!isExpiredAt(clock.instant())) {
+            throw new IllegalStateException("Import deadline has not expired");
+        }
+        errorCode = "IMPORT_DEADLINE_EXPIRED";
+        transitionTo(ImportStatus.EXPIRED, clock);
+    }
+
+    public boolean isExpiredAt(Instant now) {
+        if (isTerminal(status)) {
+            return false;
+        }
+        if ((status == ImportStatus.AWAITING_UPLOAD || status == ImportStatus.NEEDS_INPUT)
+                && inputDeadlineAt != null && !inputDeadlineAt.isAfter(now)) {
+            return true;
+        }
+        return processingDeadlineAt != null && !processingDeadlineAt.isAfter(now);
     }
 
     public void checkpoint(ImportStage stage, String reference, Clock clock) {
@@ -325,6 +408,14 @@ public class ImportJob {
 
     public int getAttempts() {
         return attempts;
+    }
+
+    public ImportStage getAttemptStage() {
+        return attemptStage;
+    }
+
+    public int getStageAttempts() {
+        return stageAttempts;
     }
 
     public Instant getNextAttemptAt() {

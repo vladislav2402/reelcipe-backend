@@ -12,6 +12,10 @@ public interface QuotaReservationRepository extends JpaRepository<QuotaReservati
     Optional<QuotaReservation> findTopByImportIdOrderByGenerationDesc(UUID importId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<QuotaReservation> findTopByImportIdAndStateOrderByGenerationDesc(UUID importId,
+            QuotaReservationState state);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT reservation FROM QuotaReservation reservation WHERE reservation.id = :id")
     Optional<QuotaReservation> findLocked(UUID id);
 }

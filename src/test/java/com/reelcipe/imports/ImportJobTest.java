@@ -103,6 +103,27 @@ class ImportJobTest {
                 "worker-a", NOW.plusSeconds(90), CLOCK));
     }
 
+    @Test
+    void retryMovesLeaseBackToQueueAndIncrementsStageAttempt() {
+        ImportJob job = job(ImportStatus.QUEUED);
+        job.claimForProcessing("worker-a", NOW.plusSeconds(90), CLOCK);
+
+        job.scheduleRetry(NOW.plusSeconds(2), "TEMPORARY_NETWORK", CLOCK);
+
+        assertEquals(ImportStatus.RETRY_WAIT, job.getStatus());
+        assertEquals(ImportStage.RESOLVING, job.getAttemptStage());
+        assertEquals(1, job.getStageAttempts());
+        assertNull(job.getLeaseOwner());
+        assertNull(job.getLeaseUntil());
+    }
+
+    @Test
+    void expiryIsAllowedOnlyAfterConfiguredDeadline() {
+        ImportJob job = job(ImportStatus.QUEUED);
+
+        assertThrows(IllegalStateException.class, () -> job.expire(CLOCK));
+    }
+
     private ImportJob job(ImportStatus status) {
         return new ImportJob(
                 UUID.randomUUID(),

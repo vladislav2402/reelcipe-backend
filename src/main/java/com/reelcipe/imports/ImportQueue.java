@@ -18,19 +18,21 @@ public class ImportQueue {
     private final ImportJobRepository jobs;
     private final Clock clock;
     private final Duration leaseDuration;
+    private final Duration clockSkewTolerance;
 
-    public ImportQueue(
-            ImportJobRepository jobs,
+    public ImportQueue(ImportJobRepository jobs,
             Clock clock,
-            @Value("${app.worker.lease-duration:PT90S}") Duration leaseDuration) {
+            @Value("${app.worker.lease-duration:PT90S}") Duration leaseDuration,
+            @Value("${app.worker.clock-skew-tolerance:PT1S}") Duration clockSkewTolerance) {
         this.jobs = jobs;
         this.clock = clock;
         this.leaseDuration = leaseDuration;
+        this.clockSkewTolerance = clockSkewTolerance;
     }
 
     @Transactional
     public Optional<ImportLease> claimNext(String workerId) {
-        Optional<ImportJob> candidate = jobs.findNextClaimable();
+        Optional<ImportJob> candidate = jobs.findNextClaimable(clockSkewTolerance.toMillis() + " milliseconds");
         if (candidate.isEmpty()) {
             return Optional.empty();
         }
