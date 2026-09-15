@@ -41,3 +41,6 @@ databaseChangeLog:
   - include:
       file: changes/014-audio-outcome.xml
       relativeToChangelogFile: true
+  - include:
+      file: changes/015-transcription.xml
+      relativeToChangelogFile: true

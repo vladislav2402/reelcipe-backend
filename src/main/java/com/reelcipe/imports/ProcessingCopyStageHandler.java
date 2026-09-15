@@ -10,12 +10,15 @@ import org.springframework.stereotype.Service;
 public class ProcessingCopyStageHandler implements ImportStageHandler {
     private final ProcessingCopyService copies;
     private final com.reelcipe.imports.audio.AudioPipelineService audio;
+    private final com.reelcipe.imports.transcription.TranscriptionPipelineService transcription;
 
     public ProcessingCopyStageHandler(
             ProcessingCopyService copies,
-            com.reelcipe.imports.audio.AudioPipelineService audio) {
+            com.reelcipe.imports.audio.AudioPipelineService audio,
+            com.reelcipe.imports.transcription.TranscriptionPipelineService transcription) {
         this.copies = copies;
         this.audio = audio;
+        this.transcription = transcription;
     }
 
     @Override
@@ -24,6 +27,8 @@ public class ProcessingCopyStageHandler implements ImportStageHandler {
             copies.copy(lease, control);
         } else if (lease.stage() == ImportStage.EXTRACTING_AUDIO) {
             audio.extract(lease, control);
+        } else if (lease.stage() == ImportStage.TRANSCRIBING) {
+            transcription.transcribe(lease, control);
         }
     }
 }

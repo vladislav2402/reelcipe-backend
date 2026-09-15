@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+    <changeSet id="015-transcription" author="reelcipe">
+        <createTable tableName="ai_attempts">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="ai_attempts_pk"/>
+            </column>
+            <column name="import_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kind" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attempt_number" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="input_hash" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="provider" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="model" type="VARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="error_code" type="VARCHAR(255)"/>
+            <column name="usage_seconds" type="INT"/>
+            <column name="usage_units" type="INT"/>
+            <column name="started_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="ai_attempts"
+                                 baseColumnNames="import_id"
+                                 constraintName="ai_attempts_import_fk"
+                                 referencedTableName="import_jobs"
+                                 referencedColumnNames="id"/>
+        <createIndex tableName="ai_attempts" indexName="ai_attempts_import_idx">
+            <column name="import_id"/>
+            <column name="kind"/>
+            <column name="attempt_number" descending="true"/>
+        </createIndex>
+
+        <createTable tableName="transcriptions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="transcriptions_pk"/>
+            </column>
+            <column name="import_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="audio_asset_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="input_hash" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="language" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="speech_status" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transcript_hash" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="full_text" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="duration_seconds" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="provider" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="model" type="VARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="transcriptions"
+                                 baseColumnNames="import_id"
+                                 constraintName="transcriptions_import_fk"
+                                 referencedTableName="import_jobs"
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="transcriptions"
+                                 baseColumnNames="audio_asset_id"
+                                 constraintName="transcriptions_audio_asset_fk"
+                                 referencedTableName="media_assets"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="transcriptions"
+                             columnNames="import_id, version"
+                             constraintName="transcriptions_import_version_uq"/>
+        <createIndex tableName="transcriptions" indexName="transcriptions_import_idx">
+            <column name="import_id"/>
+            <column name="version" descending="true"/>
+        </createIndex>
+
+        <createTable tableName="transcription_segments">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="transcription_segments_pk"/>
+            </column>
+            <column name="transcription_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="segment_index" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_ms" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_ms" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="text" type="VARCHAR(4000)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="transcription_segments"
+                                 baseColumnNames="transcription_id"
+                                 constraintName="transcription_segments_transcription_fk"
+                                 referencedTableName="transcriptions"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="transcription_segments"
+                             columnNames="transcription_id, segment_index"
+                             constraintName="transcription_segments_order_uq"/>
+    </changeSet>
+</databaseChangeLog>
