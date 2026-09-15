@@ -20,11 +20,14 @@ public class MockSpeechTranscriber implements SpeechTranscriber {
             "reelcipe-b20-fixture:recipe-audio-v1".getBytes(StandardCharsets.UTF_8);
     private static final byte[] NO_SPEECH_FIXTURE =
             "reelcipe-b20-fixture:no-speech-v1".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] RECIPE_MARKER =
+            "reelcipe-b20-fixture:recipe-audio-v1".getBytes(StandardCharsets.UTF_8);
 
     @Override
     public Result transcribe(InputStream audio, Request request) {
         byte[] bytes = read(audio);
-        if (java.util.Arrays.equals(bytes, RECIPE_FIXTURE)) {
+        if (java.util.Arrays.equals(bytes, RECIPE_FIXTURE)
+                || contains(bytes, RECIPE_MARKER)) {
             return new Result(
                     "en",
                     SpeechStatus.SPEECH,
@@ -64,5 +67,21 @@ public class MockSpeechTranscriber implements SpeechTranscriber {
                     "Mock ASR input could not be read",
                     exception);
         }
+    }
+
+    private boolean contains(byte[] source, byte[] target) {
+        for (int start = 0; start <= source.length - target.length; start++) {
+            boolean matches = true;
+            for (int offset = 0; offset < target.length; offset++) {
+                if (source[start + offset] != target[offset]) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches) {
+                return true;
+            }
+        }
+        return false;
     }
 }

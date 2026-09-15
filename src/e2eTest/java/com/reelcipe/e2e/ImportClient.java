@@ -37,6 +37,22 @@ public final class ImportClient {
             String contentType,
             long sizeBytes,
             String idempotencyKey) {
+        return createUpload(
+                clientRequestId,
+                "VIDEO",
+                fileName,
+                contentType,
+                sizeBytes,
+                idempotencyKey);
+    }
+
+    public Response createUpload(
+            UUID clientRequestId,
+            String mediaKind,
+            String fileName,
+            String contentType,
+            long sizeBytes,
+            String idempotencyKey) {
         return exchange(
                 "POST",
                 "/v1/imports",
@@ -44,7 +60,7 @@ public final class ImportClient {
                         clientRequestId,
                         "UPLOAD",
                         null,
-                        "VIDEO",
+                        mediaKind,
                         fileName,
                         contentType,
                         sizeBytes,

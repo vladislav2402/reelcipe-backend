@@ -57,3 +57,9 @@ Feature: Reelcipe API
     When I create an upload import
     And I upload and confirm the import object
     Then the upload import is queued
+
+  Scenario: Worker transcribes a known audio fixture
+    Given I am authenticated as "asr-user"
+    When I create an ASR audio import
+    And I upload the ASR fixture and confirm the import
+    Then the import reaches the transcription checkpoint

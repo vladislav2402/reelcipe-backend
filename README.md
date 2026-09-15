@@ -24,11 +24,15 @@ The project has one codebase and two launch roles:
 
 E2E tests use an already running API and do not start Spring Boot, PostgreSQL or Testcontainers.
 Upload scenarios also require the local S3Mock from `infra/compose.local.yml` on port 9090.
-Start the API separately, then run:
+The B20 ASR scenario additionally requires the Worker and the `media-tools` Compose service.
+Start Compose, API and Worker separately, then run:
 
 ```powershell
 .\gradlew.bat e2eTest
 ```
+
+The B20 scenario generates a short known audio fixture inside `media-tools`, uploads it through
+the presigned API flow and waits until the Worker reaches `EXTRACTING_RECIPE`.
 
 For another API URL:
 

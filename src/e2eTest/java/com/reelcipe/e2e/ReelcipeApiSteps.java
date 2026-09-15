@@ -15,11 +15,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,6 +45,8 @@ public class ReelcipeApiSteps {
     private UUID uploadAttemptId;
     private String uploadUrl;
     private String idempotencyKey;
+    private byte[] asrFixture;
+    private Path asrFixturePath;
     private Response lastResponse;
 
     @Before
@@ -51,6 +59,8 @@ public class ReelcipeApiSteps {
         uploadAttemptId = null;
         uploadUrl = null;
         idempotencyKey = null;
+        asrFixture = null;
+        asrFixturePath = null;
         lastResponse = null;
         createdRecipeIds.clear();
         String baseUrl = System.getProperty(
@@ -65,11 +75,10 @@ public class ReelcipeApiSteps {
 
     @After
     public void cleanupScenarioData() {
-        if (accessToken == null) {
-            return;
-        }
-
         try {
+            if (accessToken == null) {
+                return;
+            }
             for (String createdRecipeId : createdRecipeIds) {
                 RecipeClient.Response recipe = recipeClient.getRecipe(createdRecipeId);
                 if (recipe.status() == 200) {
@@ -97,6 +106,8 @@ public class ReelcipeApiSteps {
             }
         } catch (Exception ignored) {
             // Cleanup must not hide the original scenario failure.
+        } finally {
+            deleteFixture();
         }
     }
 
@@ -324,6 +335,64 @@ public class ReelcipeApiSteps {
         assertThat(json(lastResponse.body()).get("status").asText()).isEqualTo("QUEUED");
     }
 
+    @When("I create an ASR audio import")
+    public void createAsrAudioImport() {
+        asrFixture = createAsrFixture();
+        ImportClient.Response response = importClient.createUpload(
+                UUID.randomUUID(),
+                "AUDIO",
+                "b20-e2e.flac",
+                "audio/flac",
+                asrFixture.length,
+                UUID.randomUUID().toString());
+        lastResponse = new Response(response.status(), response.body(), null);
+        assertThat(lastResponse.status()).isEqualTo(202);
+        JsonNode body = json(lastResponse.body());
+        importId = body.get("id").asText();
+        assertThat(body.get("status").asText()).isEqualTo("AWAITING_UPLOAD");
+    }
+
+    @And("I upload the ASR fixture and confirm the import")
+    public void uploadAsrFixtureAndConfirmImport() {
+        ImportClient.Response urlResponse = importClient.uploadUrl(importId);
+        assertThat(urlResponse.status()).isEqualTo(200);
+        JsonNode urlBody = json(urlResponse.body());
+        uploadAttemptId = UUID.fromString(urlBody.get("uploadAttemptId").asText());
+        uploadUrl = urlBody.get("url").asText();
+        ImportClient.Response uploadResponse = importClient.putObject(
+                uploadUrl,
+                asrFixture,
+                "audio/flac");
+        assertThat(uploadResponse.status()).isIn(200, 201, 204);
+        ImportClient.Response completeResponse = importClient.completeUpload(
+                importId,
+                uploadAttemptId);
+        lastResponse = new Response(completeResponse.status(), completeResponse.body(), null);
+        assertThat(lastResponse.status()).isEqualTo(200);
+        assertThat(json(lastResponse.body()).get("status").asText()).isEqualTo("QUEUED");
+    }
+
+    @Then("the import reaches the transcription checkpoint")
+    public void importReachesTranscriptionCheckpoint() {
+        long deadline = System.nanoTime() + Duration.ofSeconds(60).toNanos();
+        String status = null;
+        while (System.nanoTime() < deadline) {
+            ImportClient.Response response = importClient.get(importId);
+            lastResponse = new Response(response.status(), response.body(), null);
+            assertThat(lastResponse.status()).isEqualTo(200);
+            status = json(lastResponse.body()).get("status").asText();
+            if ("EXTRACTING_RECIPE".equals(status)) {
+                break;
+            }
+            if ("FAILED".equals(status) || "CANCELLED".equals(status)
+                    || "EXPIRED".equals(status)) {
+                break;
+            }
+            sleep(Duration.ofMillis(500));
+        }
+        assertThat(status).isEqualTo("EXTRACTING_RECIPE");
+    }
+
     @Then("the import is queued with one reserved quota unit")
     public void importQueuedWithQuota() {
         JsonNode body = json(lastResponse.body());
@@ -382,6 +451,80 @@ public class ReelcipeApiSteps {
             return objectMapper.readTree(body);
         } catch (Exception e) {
             throw new AssertionError("Invalid JSON response: " + body, e);
+        }
+    }
+
+    private byte[] createAsrFixture() {
+        Path workDirectory = Path.of(System.getProperty("user.dir"), ".local", "media-work");
+        asrFixturePath = workDirectory.resolve("b20-e2e-source.flac");
+        try {
+            Files.createDirectories(workDirectory);
+            List<String> command = List.of(
+                    "docker",
+                    "compose",
+                    "--env-file",
+                    System.getenv().getOrDefault("E2E_COMPOSE_ENV_FILE", "infra/.env.local"),
+                    "-f",
+                    System.getenv().getOrDefault(
+                            "E2E_COMPOSE_FILE", "infra/compose.local.yml"),
+                    "exec",
+                    "-T",
+                    "media-tools",
+                    "ffmpeg",
+                    "-v",
+                    "error",
+                    "-nostdin",
+                    "-y",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "sine=frequency=440:sample_rate=16000",
+                    "-t",
+                    "4",
+                    "-metadata",
+                    "comment=reelcipe-b20-fixture:recipe-audio-v1",
+                    "-c:a",
+                    "flac",
+                    "/work/b20-e2e-source.flac");
+            Process process = new ProcessBuilder(command)
+                    .directory(Path.of(System.getProperty("user.dir")).toFile())
+                    .redirectErrorStream(true)
+                    .start();
+            if (!process.waitFor(30, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                throw new AssertionError("Timed out while creating ASR fixture");
+            }
+            String output = new String(
+                    process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            assertThat(process.exitValue())
+                    .withFailMessage("Unable to create ASR fixture: %s", output)
+                    .isZero();
+            return Files.readAllBytes(asrFixturePath);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError("Unable to create ASR fixture", exception);
+        } catch (IOException exception) {
+            throw new AssertionError("Unable to create ASR fixture", exception);
+        }
+    }
+
+    private void sleep(Duration duration) {
+        try {
+            Thread.sleep(duration.toMillis());
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError("E2E polling was interrupted", exception);
+        }
+    }
+
+    private void deleteFixture() {
+        if (asrFixturePath == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(asrFixturePath);
+        } catch (IOException ignored) {
+            // E2E fixture cleanup must not hide a scenario result.
         }
     }
 
