@@ -23,6 +23,7 @@ The project has one codebase and two launch roles:
 ## E2E tests
 
 E2E tests use an already running API and do not start Spring Boot, PostgreSQL or Testcontainers.
+Upload scenarios also require the local S3Mock from `infra/compose.local.yml` on port 9090.
 Start the API separately, then run:
 
 ```powershell

@@ -31,6 +31,56 @@ public final class ImportClient {
                 idempotencyKey);
     }
 
+    public Response createUpload(
+            UUID clientRequestId,
+            String fileName,
+            String contentType,
+            long sizeBytes,
+            String idempotencyKey) {
+        return exchange(
+                "POST",
+                "/v1/imports",
+                new CreatePayload(
+                        clientRequestId,
+                        "UPLOAD",
+                        null,
+                        "VIDEO",
+                        fileName,
+                        contentType,
+                        sizeBytes,
+                        null),
+                idempotencyKey);
+    }
+
+    public Response uploadUrl(String importId) {
+        return exchange("POST", "/v1/imports/" + importId + "/upload-url", null, null);
+    }
+
+    public Response putObject(String url, byte[] content, String contentType) {
+        try {
+            ResponseEntity<String> response = client.put()
+                    .uri(url)
+                    .header(HttpHeaders.CONTENT_TYPE, contentType)
+                    .body(content)
+                    .retrieve()
+                    .toEntity(String.class);
+            return new Response(response.getStatusCode().value(), response.getBody());
+        } catch (RestClientResponseException exception) {
+            return new Response(
+                    exception.getStatusCode().value(), exception.getResponseBodyAsString());
+        } catch (Exception exception) {
+            throw new AssertionError("Unable to upload object to presigned URL", exception);
+        }
+    }
+
+    public Response completeUpload(String importId, UUID uploadAttemptId) {
+        return exchange(
+                "POST",
+                "/v1/imports/" + importId + "/upload-complete",
+                new UploadCompletionPayload(uploadAttemptId),
+                null);
+    }
+
     public Response get(String importId) {
         return exchange("GET", "/v1/imports/" + importId, null, null);
     }
@@ -71,6 +121,9 @@ public final class ImportClient {
             String contentType,
             Long sizeBytes,
             String descriptionText) {
+    }
+
+    public record UploadCompletionPayload(UUID uploadAttemptId) {
     }
 
     public record Response(int status, String body) {

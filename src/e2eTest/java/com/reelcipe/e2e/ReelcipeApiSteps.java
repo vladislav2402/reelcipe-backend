@@ -36,6 +36,8 @@ public class ReelcipeApiSteps {
     private String recipeId;
     private String recipeVersion;
     private String importId;
+    private UUID uploadAttemptId;
+    private String uploadUrl;
     private String idempotencyKey;
     private Response lastResponse;
 
@@ -46,12 +48,14 @@ public class ReelcipeApiSteps {
         recipeId = null;
         recipeVersion = null;
         importId = null;
+        uploadAttemptId = null;
+        uploadUrl = null;
         idempotencyKey = null;
         lastResponse = null;
         createdRecipeIds.clear();
         String baseUrl = System.getProperty(
                 "e2e.base-url",
-                System.getenv().getOrDefault("E2E_BASE_URL", "http://localhost:8080"));
+                System.getenv().getOrDefault("E2E_BASE_URL", "http://127.0.0.1:8080"));
         client = RestClient.builder().baseUrl(baseUrl).build();
         authClient = new AuthClient(client, objectMapper);
         recipeClient = new RecipeClient(client, objectMapper);
@@ -277,6 +281,47 @@ public class ReelcipeApiSteps {
                 .isEqualTo(json(second.body()).get("id").asText());
         importId = json(second.body()).get("id").asText();
         lastResponse = new Response(second.status(), second.body(), null);
+    }
+
+    @When("I create an upload import")
+    public void createUploadImport() {
+        long sizeBytes = 12;
+        ImportClient.Response response = importClient.createUpload(
+                UUID.randomUUID(),
+                "e2e-video.mp4",
+                "video/mp4",
+                sizeBytes,
+                UUID.randomUUID().toString());
+        lastResponse = new Response(response.status(), response.body(), null);
+        assertThat(lastResponse.status()).isEqualTo(202);
+        JsonNode body = json(lastResponse.body());
+        importId = body.get("id").asText();
+        assertThat(body.get("status").asText()).isEqualTo("AWAITING_UPLOAD");
+    }
+
+    @When("I upload and confirm the import object")
+    public void uploadAndConfirmImportObject() {
+        ImportClient.Response urlResponse = importClient.uploadUrl(importId);
+        assertThat(urlResponse.status()).isEqualTo(200);
+        JsonNode urlBody = json(urlResponse.body());
+        uploadAttemptId = UUID.fromString(urlBody.get("uploadAttemptId").asText());
+        uploadUrl = urlBody.get("url").asText();
+
+        byte[] content = "e2e-upload!!".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(content).hasSize(12);
+        ImportClient.Response uploadResponse = importClient.putObject(
+                uploadUrl, content, "video/mp4");
+        assertThat(uploadResponse.status()).isIn(200, 201, 204);
+
+        ImportClient.Response completeResponse = importClient.completeUpload(
+                importId, uploadAttemptId);
+        lastResponse = new Response(completeResponse.status(), completeResponse.body(), null);
+    }
+
+    @Then("the upload import is queued")
+    public void uploadImportQueued() {
+        assertThat(lastResponse.status()).isEqualTo(200);
+        assertThat(json(lastResponse.body()).get("status").asText()).isEqualTo("QUEUED");
     }
 
     @Then("the import is queued with one reserved quota unit")

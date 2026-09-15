@@ -51,3 +51,9 @@ Feature: Reelcipe API
     Then the response status is 200
     And I request the created import
     And the import can be found in my import list
+
+  Scenario: User can upload and confirm a media import
+    Given I am authenticated as "upload-user"
+    When I create an upload import
+    And I upload and confirm the import object
+    Then the upload import is queued
