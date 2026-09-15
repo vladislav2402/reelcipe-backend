@@ -45,6 +45,8 @@ app:
     operations-retry-initial-delay: ${APP_WORKER_OPERATIONS_RETRY_INITIAL_DELAY:PT2S}
     operations-retry-maximum-delay: ${APP_WORKER_OPERATIONS_RETRY_MAXIMUM_DELAY:PT15M}
     operations-retry-jitter-ratio: ${APP_WORKER_OPERATIONS_RETRY_JITTER_RATIO:0.2}
+    processing-copy-temp-directory: ${APP_WORKER_PROCESSING_COPY_TEMP_DIRECTORY:${java.io.tmpdir}/reelcipe-processing}
+    processing-copy-max-bytes: ${APP_WORKER_PROCESSING_COPY_MAX_BYTES:104857600}
     upload-reconciler-interval-ms: ${APP_WORKER_UPLOAD_RECONCILER_INTERVAL_MS:30000}
     upload-reconciler-batch-size: ${APP_WORKER_UPLOAD_RECONCILER_BATCH_SIZE:20}
   providers:

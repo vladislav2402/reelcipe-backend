@@ -2,7 +2,9 @@ package com.reelcipe.imports.domain;
 
 import jakarta.persistence.*;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -115,6 +117,28 @@ public class MediaAsset {
 
     public Integer getDurationSeconds() {
         return durationSeconds;
+    }
+
+    public void recordProcessingCopy(
+            String processingKey,
+            String sha256,
+            long actualSizeBytes,
+            Clock clock) {
+        if (this.processingKey != null) {
+            if (!this.processingKey.equals(processingKey)
+                    || !Objects.equals(this.sha256, sha256)
+                    || this.sizeBytes != actualSizeBytes) {
+                throw new IllegalStateException("Processing copy is already immutable");
+            }
+            return;
+        }
+        if (this.sizeBytes != actualSizeBytes) {
+            throw new IllegalArgumentException("Processing copy size does not match the source asset");
+        }
+        this.processingKey = processingKey;
+        this.sha256 = sha256;
+        this.status = MediaAssetStatus.READY;
+        this.updatedAt = clock.instant();
     }
 
     public Instant getExpiresAt() {
