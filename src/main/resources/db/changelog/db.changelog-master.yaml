@@ -47,3 +47,6 @@ databaseChangeLog:
   - include:
       file: changes/016-recipe-extraction.xml
       relativeToChangelogFile: true
+  - include:
+      file: changes/017-recipe-finalization.xml
+      relativeToChangelogFile: true

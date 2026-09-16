@@ -64,6 +64,15 @@ public class Recipe {
         this.updatedAt = now;
     }
 
+    public void save(Instant now) {
+        if (libraryState == RecipeLibraryState.DELETED) {
+            throw new IllegalStateException("Deleted recipe cannot be saved");
+        }
+        libraryState = RecipeLibraryState.SAVED;
+        version++;
+        updatedAt = now;
+    }
+
     public UUID getId() {
         return id;
     }

@@ -62,4 +62,4 @@ Feature: Reelcipe API
     Given I am authenticated as "asr-user"
     When I create an ASR audio import
     And I upload the ASR fixture and confirm the import
-    Then the import reaches the recipe validation checkpoint
+    Then the import reaches the finalized recipe checkpoint

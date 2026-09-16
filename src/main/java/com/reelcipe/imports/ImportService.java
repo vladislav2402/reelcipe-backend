@@ -8,6 +8,9 @@ import com.reelcipe.billing.QuotaService;
 import com.reelcipe.idempotency.IdempotencyService;
 import com.reelcipe.idempotency.domain.IdempotencyResult;
 import com.reelcipe.imports.domain.*;
+import com.reelcipe.recipes.domain.RecipeImportResult;
+import com.reelcipe.recipes.domain.RecipeImportResultRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -46,6 +49,7 @@ public class ImportService {
     private final long maxAudioSizeBytes;
     private final Duration uploadTtl;
     private final Duration processingTtl;
+    private final RecipeImportResultRepository recipeImports;
 
     public ImportService(
             ImportJobRepository jobs,
@@ -61,6 +65,39 @@ public class ImportService {
             @Value("${app.limits.max-audio-size-bytes:20971520}") long maxAudioSizeBytes,
             @Value("${app.import.upload-ttl:PT24H}") Duration uploadTtl,
             @Value("${app.import.processing-ttl:PT48H}") Duration processingTtl) {
+        this(
+                jobs,
+                users,
+                idempotency,
+                quota,
+                uploads,
+                objectMapper,
+                clock,
+                maxActiveImports,
+                maxDescriptionCharacters,
+                maxVideoSizeBytes,
+                maxAudioSizeBytes,
+                uploadTtl,
+                processingTtl,
+                null);
+    }
+
+    @Autowired
+    public ImportService(
+            ImportJobRepository jobs,
+            UserRepository users,
+            IdempotencyService idempotency,
+            QuotaService quota,
+            UploadService uploads,
+            ObjectMapper objectMapper,
+            Clock clock,
+            @Value("${app.limits.max-active-imports-per-user:2}") int maxActiveImports,
+            @Value("${app.limits.max-description-characters:20000}") int maxDescriptionCharacters,
+            @Value("${app.limits.max-video-size-bytes:104857600}") long maxVideoSizeBytes,
+            @Value("${app.limits.max-audio-size-bytes:20971520}") long maxAudioSizeBytes,
+            @Value("${app.import.upload-ttl:PT24H}") Duration uploadTtl,
+            @Value("${app.import.processing-ttl:PT48H}") Duration processingTtl,
+            RecipeImportResultRepository recipeImports) {
         this.jobs = jobs;
         this.users = users;
         this.idempotency = idempotency;
@@ -74,6 +111,7 @@ public class ImportService {
         this.maxAudioSizeBytes = maxAudioSizeBytes;
         this.uploadTtl = uploadTtl;
         this.processingTtl = processingTtl;
+        this.recipeImports = recipeImports;
     }
 
     @Transactional
@@ -149,7 +187,16 @@ public class ImportService {
                 job.getAttempts(), job.getAttemptStage(), job.getStageAttempts(),
                 job.getNextAttemptAt(), job.getProcessingDeadlineAt(),
                 job.getInputDeadlineAt(), job.getErrorCode(), job.getCreatedAt(), job.getUpdatedAt(),
-                job.getCompletedAt(), terminal ? null : 2, quotaSnapshot);
+                job.getCompletedAt(), terminal ? null : 2, recipeId(job), quotaSnapshot);
+    }
+
+    private UUID recipeId(ImportJob job) {
+        if (recipeImports == null) {
+            return null;
+        }
+        return recipeImports.findByImportId(job.getId())
+                .map(RecipeImportResult::getRecipeId)
+                .orElse(null);
     }
 
     private void validate(UUID userId, ImportCommand command) {
@@ -237,6 +284,7 @@ public class ImportService {
             Instant updatedAt,
             Instant completedAt,
             Integer pollAfterSeconds,
+            UUID recipeId,
             QuotaService.QuotaSnapshot quota) {
     }
 }

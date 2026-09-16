@@ -35,6 +35,10 @@ public final class RecipeClient {
         return exchange("GET", "/v1/recipes/" + recipeId, null, null, null);
     }
 
+    public Response saveRecipe(String recipeId, String idempotencyKey) {
+        return exchange("POST", "/v1/recipes/" + recipeId + "/save", null, idempotencyKey, null);
+    }
+
     public Response deleteRecipe(String recipeId, String expectedVersion, String idempotencyKey) {
         return exchange("DELETE", "/v1/recipes/" + recipeId, null, idempotencyKey, expectedVersion);
     }

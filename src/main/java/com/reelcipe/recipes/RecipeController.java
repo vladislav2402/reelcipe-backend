@@ -81,6 +81,17 @@ public class RecipeController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{recipeId}/save")
+    @Operation(summary = "Save an imported draft to the library")
+    public ResponseEntity<RecipeView> save(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable UUID recipeId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey) {
+        RecipeView recipe = service.save(
+                requireUser(user).userId(), recipeId, idempotencyKey);
+        return ResponseEntity.ok().eTag(etag(recipe.version())).body(recipe);
+    }
+
     private AuthenticatedUser requireUser(AuthenticatedUser user) {
         if (user == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication is required");
         return user;

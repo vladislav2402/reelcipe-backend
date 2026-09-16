@@ -393,8 +393,8 @@ public class ReelcipeApiSteps {
         assertThat(status).isIn("EXTRACTING_RECIPE", "VALIDATING");
     }
 
-    @Then("the import reaches the recipe validation checkpoint")
-    public void importReachesRecipeValidationCheckpoint() {
+    @Then("the import reaches the finalized recipe checkpoint")
+    public void importReachesFinalizedRecipeCheckpoint() {
         long deadline = System.nanoTime() + Duration.ofSeconds(60).toNanos();
         String status = null;
         while (System.nanoTime() < deadline) {
@@ -402,7 +402,7 @@ public class ReelcipeApiSteps {
             lastResponse = new Response(response.status(), response.body(), null);
             assertThat(lastResponse.status()).isEqualTo(200);
             status = json(lastResponse.body()).get("status").asText();
-            if ("VALIDATING".equals(status)) {
+            if ("READY".equals(status) || "REVIEW_REQUIRED".equals(status)) {
                 break;
             }
             if ("FAILED".equals(status) || "CANCELLED".equals(status)
@@ -411,7 +411,18 @@ public class ReelcipeApiSteps {
             }
             sleep(Duration.ofMillis(500));
         }
-        assertThat(status).isEqualTo("VALIDATING");
+        assertThat(status).isIn("READY", "REVIEW_REQUIRED");
+
+        JsonNode body = json(lastResponse.body());
+        assertThat(body.get("recipeId")).isNotNull();
+        recipeId = body.get("recipeId").asText();
+        RecipeClient.Response saveResponse = recipeClient.saveRecipe(
+                recipeId,
+                UUID.randomUUID().toString());
+        lastResponse = new Response(saveResponse.status(), saveResponse.body(), saveResponse.etag());
+        assertThat(lastResponse.status()).isEqualTo(200);
+        assertThat(json(lastResponse.body()).get("libraryState").asText()).isEqualTo("SAVED");
+        createdRecipeIds.add(recipeId);
     }
 
     @Then("the import is queued with one reserved quota unit")

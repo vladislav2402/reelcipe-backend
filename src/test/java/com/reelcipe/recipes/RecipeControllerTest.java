@@ -20,7 +20,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RecipeControllerTest {
 
-    @Mock RecipeService service;
+    @Mock
+    RecipeService service;
 
     @Test
     void createReturnsRecipeVersionInResponse() {
@@ -44,5 +45,29 @@ class RecipeControllerTest {
         assertThrows(ResponseStatusException.class, () -> controller.patch(
                 new AuthenticatedUser(UUID.randomUUID(), UUID.randomUUID()), UUID.randomUUID(), "bad", "key",
                 new RecipeController.RecipeRequest("Pasta", RecipeLanguage.EN, List.of(), List.of())));
+    }
+
+    @Test
+    void saveReturnsUpdatedDraftVersion() {
+        RecipeController controller = new RecipeController(service);
+        UUID recipeId = UUID.randomUUID();
+        RecipeService.RecipeView view = new RecipeService.RecipeView(
+                recipeId,
+                "Pasta",
+                RecipeLanguage.EN,
+                null,
+                com.reelcipe.recipes.domain.RecipeLibraryState.SAVED,
+                2,
+                Instant.now(),
+                Instant.now(),
+                List.of(),
+                List.of());
+        when(service.save(any(), any(), any())).thenReturn(view);
+
+        var response = controller.save(
+                new AuthenticatedUser(UUID.randomUUID(), UUID.randomUUID()), recipeId, "save-key");
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals("\"2\"", response.getHeaders().getETag());
     }
 }

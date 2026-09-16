@@ -65,12 +65,12 @@ public class RecipeService {
         List<Recipe> recipesPage = payload == null
                 ? recipes.findLibrary(userId, RecipeLibraryState.SAVED, normalizedSearch, pageRequest)
                 : recipes.findLibraryAfter(
-                        userId,
-                        RecipeLibraryState.SAVED,
-                        normalizedSearch,
-                        Instant.parse(payload.updatedAt()),
-                        payload.id(),
-                        pageRequest);
+                userId,
+                RecipeLibraryState.SAVED,
+                normalizedSearch,
+                Instant.parse(payload.updatedAt()),
+                payload.id(),
+                pageRequest);
         boolean hasNext = recipesPage.size() > limit;
         List<Recipe> page = hasNext ? recipesPage.subList(0, limit) : recipesPage;
         String nextCursor = hasNext ? encodeCursor(normalizedSearch, page.get(page.size() - 1)) : null;
@@ -95,6 +95,21 @@ public class RecipeService {
             Recipe recipe = locked(userId, recipeId, expectedVersion);
             recipe.delete(Instant.now());
             sync.record(userId, "recipe", recipe.getId(), "DELETE", recipe.getVersion());
+            return view(recipe);
+        });
+    }
+
+    @Transactional
+    public RecipeView save(UUID userId, UUID recipeId, String key) {
+        return executeMutation(userId, recipeId, key, "recipe.save", "save", () -> {
+            Recipe recipe = recipes.findForUpdate(recipeId, userId).orElseThrow(this::notFound);
+            if (recipe.getLibraryState() == RecipeLibraryState.SAVED) {
+                return view(recipe);
+            }
+            recipe.save(Instant.now());
+            revisions.save(new RecipeRevision(
+                    recipe.getId(), recipe.getVersion(), userId, json(view(recipe)), Instant.now()));
+            sync.record(userId, "recipe", recipe.getId(), "UPDATE", recipe.getVersion());
             return view(recipe);
         });
     }

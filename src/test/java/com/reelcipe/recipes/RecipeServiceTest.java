@@ -16,19 +16,27 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class RecipeServiceTest {
 
-    @Mock RecipeRepository recipes;
-    @Mock RecipeIngredientRepository ingredients;
-    @Mock RecipeStepRepository steps;
-    @Mock RecipeRevisionRepository revisions;
-    @Mock IdempotencyService idempotency;
-    @Mock SyncChangeService sync;
+    @Mock
+    RecipeRepository recipes;
+    @Mock
+    RecipeIngredientRepository ingredients;
+    @Mock
+    RecipeStepRepository steps;
+    @Mock
+    RecipeRevisionRepository revisions;
+    @Mock
+    IdempotencyService idempotency;
+    @Mock
+    SyncChangeService sync;
 
     @Test
     void patchRejectsStaleIfMatchVersion() {
@@ -69,5 +77,39 @@ class RecipeServiceTest {
                 new ObjectMapper());
 
         assertThrows(ResponseStatusException.class, () -> service.list(UUID.randomUUID(), null, 101, null));
+    }
+
+    @Test
+    void savePublishesDraftWithoutCallingQuotaOrAi() {
+        RecipeService service = new RecipeService(
+                recipes,
+                ingredients,
+                steps,
+                revisions,
+                idempotency,
+                sync,
+                new ObjectMapper().findAndRegisterModules());
+        UUID userId = UUID.randomUUID();
+        UUID recipeId = UUID.randomUUID();
+        Recipe recipe = new Recipe(
+                recipeId,
+                userId,
+                "Imported pasta",
+                RecipeLanguage.EN,
+                null,
+                RecipeAnalysisMode.IMPORT,
+                RecipeLibraryState.DRAFT,
+                Instant.now());
+        when(recipes.findForUpdate(recipeId, userId)).thenReturn(Optional.of(recipe));
+        when(ingredients.findByRecipeIdOrderByPosition(recipeId)).thenReturn(List.of());
+        when(steps.findByRecipeIdOrderByPosition(recipeId)).thenReturn(List.of());
+        when(idempotency.execute(any(), any(), any(), any(), any(), any())).thenAnswer(invocation ->
+                ((java.util.function.Supplier<com.reelcipe.idempotency.domain.IdempotencyResult>) invocation.getArgument(5)).get());
+
+        RecipeService.RecipeView saved = service.save(userId, recipeId, "save-key");
+
+        assertThat(saved.libraryState()).isEqualTo(RecipeLibraryState.SAVED);
+        assertThat(saved.version()).isEqualTo(2);
+        verify(sync).record(userId, "recipe", recipeId, "UPDATE", 2);
     }
 }
