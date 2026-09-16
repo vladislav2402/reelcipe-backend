@@ -393,6 +393,27 @@ public class ReelcipeApiSteps {
         assertThat(status).isIn("EXTRACTING_RECIPE", "VALIDATING");
     }
 
+    @Then("the import reaches the recipe validation checkpoint")
+    public void importReachesRecipeValidationCheckpoint() {
+        long deadline = System.nanoTime() + Duration.ofSeconds(60).toNanos();
+        String status = null;
+        while (System.nanoTime() < deadline) {
+            ImportClient.Response response = importClient.get(importId);
+            lastResponse = new Response(response.status(), response.body(), null);
+            assertThat(lastResponse.status()).isEqualTo(200);
+            status = json(lastResponse.body()).get("status").asText();
+            if ("VALIDATING".equals(status)) {
+                break;
+            }
+            if ("FAILED".equals(status) || "CANCELLED".equals(status)
+                    || "EXPIRED".equals(status) || "NEEDS_INPUT".equals(status)) {
+                break;
+            }
+            sleep(Duration.ofMillis(500));
+        }
+        assertThat(status).isEqualTo("VALIDATING");
+    }
+
     @Then("the import is queued with one reserved quota unit")
     public void importQueuedWithQuota() {
         JsonNode body = json(lastResponse.body());
