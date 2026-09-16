@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://reelcipe.local/contracts/recipe-extraction-v1.schema.json",
+  "title": "Reelcipe recipe extraction candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "title",
+    "language",
+    "description",
+    "ingredients",
+    "steps"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "language": {
+      "enum": [
+        "EN",
+        "RU",
+        "UK",
+        "OTHER"
+      ]
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 4000
+    },
+    "ingredients": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/ingredient"
+      }
+    },
+    "steps": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "segmentIndex",
+        "quote"
+      ],
+      "properties": {
+        "source": {
+          "enum": [
+            "TRANSCRIPT",
+            "AUTHOR_DESCRIPTION",
+            "USER_TEXT"
+          ]
+        },
+        "segmentIndex": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      }
+    },
+    "ingredient": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "amount",
+        "amountMax",
+        "unit",
+        "originalText",
+        "evidence"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "amount": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "amountMax": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64
+        },
+        "originalText": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 1000
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "position",
+        "text",
+        "evidence"
+      ],
+      "properties": {
+        "position": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
+      }
+    }
+  }
+}

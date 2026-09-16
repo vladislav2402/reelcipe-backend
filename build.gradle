@@ -101,6 +101,19 @@ tasks.named('processE2eTestResources') {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+def recipeContractResources = layout.buildDirectory.dir('generated-resources')
+
+tasks.register('copyRecipeContracts', Copy) {
+    from('contracts')
+    into(recipeContractResources.map { it.dir('contracts') })
+}
+
+sourceSets.main.resources.srcDir(recipeContractResources)
+
+tasks.named('processResources') {
+    dependsOn tasks.named('copyRecipeContracts')
+}
+
 tasks.named('check') {
     dependsOn tasks.named('integrationTest')
 }

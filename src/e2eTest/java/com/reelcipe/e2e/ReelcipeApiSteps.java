@@ -381,7 +381,7 @@ public class ReelcipeApiSteps {
             lastResponse = new Response(response.status(), response.body(), null);
             assertThat(lastResponse.status()).isEqualTo(200);
             status = json(lastResponse.body()).get("status").asText();
-            if ("EXTRACTING_RECIPE".equals(status)) {
+            if ("EXTRACTING_RECIPE".equals(status) || "VALIDATING".equals(status)) {
                 break;
             }
             if ("FAILED".equals(status) || "CANCELLED".equals(status)
@@ -390,7 +390,7 @@ public class ReelcipeApiSteps {
             }
             sleep(Duration.ofMillis(500));
         }
-        assertThat(status).isEqualTo("EXTRACTING_RECIPE");
+        assertThat(status).isIn("EXTRACTING_RECIPE", "VALIDATING");
     }
 
     @Then("the import is queued with one reserved quota unit")

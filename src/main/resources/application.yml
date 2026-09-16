@@ -85,6 +85,14 @@ app:
   asr:
     provider: ${APP_ASR_PROVIDER:mock}
     mock-model: ${APP_ASR_MOCK_MODEL:reelcipe-mock-asr-v1}
+  llm:
+    provider: ${APP_LLM_PROVIDER:mock}
+    mock-model: ${APP_LLM_MOCK_MODEL:reelcipe-mock-llm-v1}
+    prompt-version: ${APP_LLM_PROMPT_VERSION:recipe-extraction-v1}
+    schema-version: ${APP_LLM_SCHEMA_VERSION:recipe-extraction-v1}
+    pipeline-version: ${APP_LLM_PIPELINE_VERSION:b21-v1}
+    target-language: ${APP_LLM_TARGET_LANGUAGE:en}
+    corrective-retry-limit: ${APP_LLM_CORRECTIVE_RETRY_LIMIT:1}
   features:
     share-extension: ${APP_FEATURE_SHARE_EXTENSION:false}
     apple-sign-in: ${APP_FEATURE_APPLE_SIGN_IN:false}
