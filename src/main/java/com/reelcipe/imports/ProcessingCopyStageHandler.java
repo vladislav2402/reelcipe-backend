@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 @ConditionalOnProperty(name = "app.role", havingValue = "worker")
 public class ProcessingCopyStageHandler implements ImportStageHandler {
     private final ProcessingCopyService copies;
+    private final LocalFixtureResolver fixtures;
     private final com.reelcipe.imports.audio.AudioPipelineService audio;
     private final com.reelcipe.imports.transcription.TranscriptionPipelineService transcription;
     private final com.reelcipe.imports.recipe.RecipeExtractionPipelineService recipe;
@@ -16,11 +17,13 @@ public class ProcessingCopyStageHandler implements ImportStageHandler {
 
     public ProcessingCopyStageHandler(
             ProcessingCopyService copies,
+            LocalFixtureResolver fixtures,
             com.reelcipe.imports.audio.AudioPipelineService audio,
             com.reelcipe.imports.transcription.TranscriptionPipelineService transcription,
             com.reelcipe.imports.recipe.RecipeExtractionPipelineService recipe,
             com.reelcipe.imports.recipe.RecipeValidationPipelineService validation) {
         this.copies = copies;
+        this.fixtures = fixtures;
         this.audio = audio;
         this.transcription = transcription;
         this.recipe = recipe;
@@ -30,7 +33,9 @@ public class ProcessingCopyStageHandler implements ImportStageHandler {
     @Override
     public void handle(ImportLease lease, ImportLeaseControl control) {
         if (lease.stage() == ImportStage.RESOLVING) {
-            copies.copy(lease, control);
+            if (!fixtures.resolve(lease, control)) {
+                copies.copy(lease, control);
+            }
         } else if (lease.stage() == ImportStage.EXTRACTING_AUDIO) {
             audio.extract(lease, control);
         } else if (lease.stage() == ImportStage.TRANSCRIBING) {

@@ -24,15 +24,37 @@ The project has one codebase and two launch roles:
 
 E2E tests use an already running API and do not start Spring Boot, PostgreSQL or Testcontainers.
 Upload scenarios also require the local S3Mock from `infra/compose.local.yml` on port 9090.
-The B20 ASR scenario additionally requires the Worker and the `media-tools` Compose service.
+The B23 full mock pipeline scenario additionally requires the Worker and the `media-tools`
+Compose service.
 Start Compose, API and Worker separately, then run:
 
 ```powershell
 .\gradlew.bat e2eTest
 ```
 
-The B20 scenario generates a short known audio fixture inside `media-tools`, uploads it through
-the presigned API flow and waits until the Worker reaches `EXTRACTING_RECIPE`.
+The B23 scenario generates a short H.264/AAC video fixture inside `media-tools`, uploads it
+through the presigned S3 flow and waits for ASR, mock LLM, validation, Save and shopping.
+No provider network calls are made. The mock ASR/LLM responses are selected by the explicit
+fixture marker `reelcipe-b23-fixture:recipe-video-v1`.
+
+To run only the full pipeline scenario, use its Cucumber tag. The independent pipeline check is:
+
+```powershell
+.\gradlew.bat "-Dcucumber.filter.tags=@b23" e2eTest
+.\gradlew.bat integrationTest --tests com.reelcipe.imports.MockPipelineIntegrationTest
+```
+
+The integration check uses PostgreSQL Testcontainers and the mock providers. The external E2E
+check uses real local PostgreSQL, S3Mock and Compose media conversion:
+
+```powershell
+docker-compose --env-file infra/.env.local -f infra/compose.local.yml up -d --build --wait
+.\gradlew.bat e2eTest
+```
+
+If the Docker installation exposes Compose as `docker compose`, set
+`$env:E2E_COMPOSE_COMMAND = 'docker'`; the E2E fixture generator will append the `compose`
+subcommand automatically.
 
 For another API URL:
 
@@ -41,7 +63,8 @@ $env:E2E_BASE_URL = 'http://localhost:9090'
 .\gradlew.bat e2eTest
 ```
 
-The API diagnostic endpoint is `GET /v1/config`. Both roles expose Actuator health; the worker does not expose `/v1/config`.
+The API diagnostic endpoint is `GET /v1/config`. Both roles expose Actuator health; the worker does not expose
+`/v1/config`.
 
 Provider integrations and persistence are intentionally not part of B01.
 

@@ -45,8 +45,8 @@ public class ReelcipeApiSteps {
     private UUID uploadAttemptId;
     private String uploadUrl;
     private String idempotencyKey;
-    private byte[] asrFixture;
-    private Path asrFixturePath;
+    private byte[] videoFixture;
+    private Path videoFixturePath;
     private Response lastResponse;
 
     @Before
@@ -59,8 +59,8 @@ public class ReelcipeApiSteps {
         uploadAttemptId = null;
         uploadUrl = null;
         idempotencyKey = null;
-        asrFixture = null;
-        asrFixturePath = null;
+        videoFixture = null;
+        videoFixturePath = null;
         lastResponse = null;
         createdRecipeIds.clear();
         String baseUrl = System.getProperty(
@@ -335,16 +335,17 @@ public class ReelcipeApiSteps {
         assertThat(json(lastResponse.body()).get("status").asText()).isEqualTo("QUEUED");
     }
 
-    @When("I create an ASR audio import")
-    public void createAsrAudioImport() {
-        asrFixture = createAsrFixture();
+    @When("I create a B23 video import")
+    public void createB23VideoImport() {
+        videoFixture = createB23VideoFixture();
         ImportClient.Response response = importClient.createUpload(
                 UUID.randomUUID(),
-                "AUDIO",
-                "b20-e2e.flac",
-                "audio/flac",
-                asrFixture.length,
-                UUID.randomUUID().toString());
+                "VIDEO",
+                "b23-e2e.mp4",
+                "video/mp4",
+                videoFixture.length,
+                UUID.randomUUID().toString(),
+                "Add pasta to boiling water and season with salt.");
         lastResponse = new Response(response.status(), response.body(), null);
         assertThat(lastResponse.status()).isEqualTo(202);
         JsonNode body = json(lastResponse.body());
@@ -352,8 +353,8 @@ public class ReelcipeApiSteps {
         assertThat(body.get("status").asText()).isEqualTo("AWAITING_UPLOAD");
     }
 
-    @And("I upload the ASR fixture and confirm the import")
-    public void uploadAsrFixtureAndConfirmImport() {
+    @And("I upload the B23 video fixture and confirm the import")
+    public void uploadB23VideoFixtureAndConfirmImport() {
         ImportClient.Response urlResponse = importClient.uploadUrl(importId);
         assertThat(urlResponse.status()).isEqualTo(200);
         JsonNode urlBody = json(urlResponse.body());
@@ -361,8 +362,8 @@ public class ReelcipeApiSteps {
         uploadUrl = urlBody.get("url").asText();
         ImportClient.Response uploadResponse = importClient.putObject(
                 uploadUrl,
-                asrFixture,
-                "audio/flac");
+                videoFixture,
+                "video/mp4");
         assertThat(uploadResponse.status()).isIn(200, 201, 204);
         ImportClient.Response completeResponse = importClient.completeUpload(
                 importId,
@@ -393,8 +394,8 @@ public class ReelcipeApiSteps {
         assertThat(status).isIn("EXTRACTING_RECIPE", "VALIDATING");
     }
 
-    @Then("the import reaches the finalized recipe checkpoint")
-    public void importReachesFinalizedRecipeCheckpoint() {
+    @Then("the import is finalized, saved and added to shopping")
+    public void importIsFinalizedSavedAndAddedToShopping() {
         long deadline = System.nanoTime() + Duration.ofSeconds(60).toNanos();
         String status = null;
         while (System.nanoTime() < deadline) {
@@ -422,7 +423,18 @@ public class ReelcipeApiSteps {
         lastResponse = new Response(saveResponse.status(), saveResponse.body(), saveResponse.etag());
         assertThat(lastResponse.status()).isEqualTo(200);
         assertThat(json(lastResponse.body()).get("libraryState").asText()).isEqualTo("SAVED");
+        recipeVersion = json(lastResponse.body()).get("version").asText();
         createdRecipeIds.add(recipeId);
+
+        ShoppingClient.Response shoppingResponse = shoppingClient.addRecipe(
+                new ShoppingClient.RecipeAdditionPayload(
+                        recipeId,
+                        Long.parseLong(recipeVersion),
+                        UUID.randomUUID()),
+                UUID.randomUUID().toString());
+        assertThat(shoppingResponse.status()).isEqualTo(201);
+        assertThat(json(shoppingResponse.body()).at("/items").toString())
+                .contains("pasta");
     }
 
     @Then("the import is queued with one reserved quota unit")
@@ -486,14 +498,19 @@ public class ReelcipeApiSteps {
         }
     }
 
-    private byte[] createAsrFixture() {
+    private byte[] createB23VideoFixture() {
         Path workDirectory = Path.of(System.getProperty("user.dir"), ".local", "media-work");
-        asrFixturePath = workDirectory.resolve("b20-e2e-source.flac");
+        videoFixturePath = workDirectory.resolve("b23-e2e-source.mp4");
         try {
             Files.createDirectories(workDirectory);
-            List<String> command = List.of(
-                    "docker",
-                    "compose",
+            List<String> command = new ArrayList<>();
+            String composeCommand = System.getenv().getOrDefault(
+                    "E2E_COMPOSE_COMMAND", "docker-compose");
+            command.add(composeCommand);
+            if ("docker".equalsIgnoreCase(composeCommand)) {
+                command.add("compose");
+            }
+            command.addAll(List.of(
                     "--env-file",
                     System.getenv().getOrDefault("E2E_COMPOSE_ENV_FILE", "infra/.env.local"),
                     "-f",
@@ -510,14 +527,27 @@ public class ReelcipeApiSteps {
                     "-f",
                     "lavfi",
                     "-i",
-                    "sine=frequency=440:sample_rate=16000",
+                    "testsrc=size=320x240:rate=25",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "sine=frequency=440:sample_rate=48000",
                     "-t",
                     "4",
                     "-metadata",
-                    "comment=reelcipe-b20-fixture:recipe-audio-v1",
+                    "comment=reelcipe-b23-fixture:recipe-video-v1",
+                    "-map",
+                    "0:v:0",
+                    "-map",
+                    "1:a:0",
+                    "-c:v",
+                    "libx264",
+                    "-pix_fmt",
+                    "yuv420p",
                     "-c:a",
-                    "flac",
-                    "/work/b20-e2e-source.flac");
+                    "aac",
+                    "-shortest",
+                    "/work/b23-e2e-source.mp4"));
             Process process = new ProcessBuilder(command)
                     .directory(Path.of(System.getProperty("user.dir")).toFile())
                     .redirectErrorStream(true)
@@ -531,7 +561,7 @@ public class ReelcipeApiSteps {
             assertThat(process.exitValue())
                     .withFailMessage("Unable to create ASR fixture: %s", output)
                     .isZero();
-            return Files.readAllBytes(asrFixturePath);
+            return Files.readAllBytes(videoFixturePath);
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new AssertionError("Unable to create ASR fixture", exception);
@@ -550,11 +580,11 @@ public class ReelcipeApiSteps {
     }
 
     private void deleteFixture() {
-        if (asrFixturePath == null) {
+        if (videoFixturePath == null) {
             return;
         }
         try {
-            Files.deleteIfExists(asrFixturePath);
+            Files.deleteIfExists(videoFixturePath);
         } catch (IOException ignored) {
             // E2E fixture cleanup must not hide a scenario result.
         }

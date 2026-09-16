@@ -91,6 +91,7 @@ public final class CommandAudioExtractor implements AudioExtractor {
                 "-nostdin",
                 "-y",
                 "-i", toolPath(input),
+                "-map_metadata", "0",
                 "-map", "0:a:0",
                 "-vn",
                 "-ac", "1",
@@ -172,7 +173,7 @@ public final class CommandAudioExtractor implements AudioExtractor {
 
     private byte[] readBounded(Process process) throws IOException {
         try (var input = process.getInputStream();
-                ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[4096];
             int total = 0;
             int read;

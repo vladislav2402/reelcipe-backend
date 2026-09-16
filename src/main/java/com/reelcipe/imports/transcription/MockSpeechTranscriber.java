@@ -22,12 +22,23 @@ public class MockSpeechTranscriber implements SpeechTranscriber {
             "reelcipe-b20-fixture:no-speech-v1".getBytes(StandardCharsets.UTF_8);
     private static final byte[] RECIPE_MARKER =
             "reelcipe-b20-fixture:recipe-audio-v1".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] B23_RECIPE_MARKER =
+            "reelcipe-b23-fixture:recipe-video-v1".getBytes(StandardCharsets.UTF_8);
+
+    public static byte[] recipeFixture() {
+        return RECIPE_FIXTURE.clone();
+    }
+
+    public static byte[] noSpeechFixture() {
+        return NO_SPEECH_FIXTURE.clone();
+    }
 
     @Override
     public Result transcribe(InputStream audio, Request request) {
         byte[] bytes = read(audio);
         if (java.util.Arrays.equals(bytes, RECIPE_FIXTURE)
-                || contains(bytes, RECIPE_MARKER)) {
+                || contains(bytes, RECIPE_MARKER)
+                || contains(bytes, B23_RECIPE_MARKER)) {
             return new Result(
                     "en",
                     SpeechStatus.SPEECH,
@@ -48,17 +59,9 @@ public class MockSpeechTranscriber implements SpeechTranscriber {
                 "Mock ASR fixture is not recognized");
     }
 
-    public static byte[] recipeFixture() {
-        return RECIPE_FIXTURE.clone();
-    }
-
-    public static byte[] noSpeechFixture() {
-        return NO_SPEECH_FIXTURE.clone();
-    }
-
     private byte[] read(InputStream input) {
         try (InputStream source = input;
-                ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             source.transferTo(output);
             return output.toByteArray();
         } catch (IOException exception) {

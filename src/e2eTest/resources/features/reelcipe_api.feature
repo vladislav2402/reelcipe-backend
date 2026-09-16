@@ -58,8 +58,9 @@ Feature: Reelcipe API
     And I upload and confirm the import object
     Then the upload import is queued
 
-  Scenario: Worker extracts a deterministic recipe candidate from known audio
+  @b23
+  Scenario: Full mock import pipeline persists a video recipe and shopping list
     Given I am authenticated as "asr-user"
-    When I create an ASR audio import
-    And I upload the ASR fixture and confirm the import
-    Then the import reaches the finalized recipe checkpoint
+    When I create a B23 video import
+    And I upload the B23 video fixture and confirm the import
+    Then the import is finalized, saved and added to shopping

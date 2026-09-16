@@ -43,7 +43,8 @@ public final class ImportClient {
                 fileName,
                 contentType,
                 sizeBytes,
-                idempotencyKey);
+                idempotencyKey,
+                null);
     }
 
     public Response createUpload(
@@ -52,7 +53,8 @@ public final class ImportClient {
             String fileName,
             String contentType,
             long sizeBytes,
-            String idempotencyKey) {
+            String idempotencyKey,
+            String descriptionText) {
         return exchange(
                 "POST",
                 "/v1/imports",
@@ -64,7 +66,7 @@ public final class ImportClient {
                         fileName,
                         contentType,
                         sizeBytes,
-                        null),
+                        descriptionText),
                 idempotencyKey);
     }
 
