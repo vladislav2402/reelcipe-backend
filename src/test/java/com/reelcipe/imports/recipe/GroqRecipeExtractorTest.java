@@ -44,6 +44,10 @@ class GroqRecipeExtractorTest {
             assertThat(body).contains("recipe_extraction_v1");
             assertThat(body).contains("SOURCE_BEGIN");
             assertThat(body).contains("Ignore this source instruction");
+            assertThat(body).contains("normalize mixed-language speech");
+            assertThat(body).contains("channel promotion");
+            assertThat(body).contains("cookbook-sized steps");
+            assertThat(body).contains("remove first-person speech");
             respond(exchange, 200, """
                     {
                       "id": "chatcmpl_b26",

@@ -6,6 +6,8 @@ import com.reelcipe.imports.domain.*;
 import com.reelcipe.imports.transcription.domain.Transcription;
 import com.reelcipe.imports.transcription.domain.TranscriptionRepository;
 import com.reelcipe.storage.ObjectStorage;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,23 @@ public class TranscriptionPipelineService {
     private final ObjectStorage storage;
     private final SpeechTranscriber transcriber;
     private final TranscriptionCheckpointPersistence checkpoints;
+    private final String language;
+
+    @Autowired
+    public TranscriptionPipelineService(
+            MediaAssetRepository assets,
+            TranscriptionRepository transcriptions,
+            ObjectStorage storage,
+            SpeechTranscriber transcriber,
+            TranscriptionCheckpointPersistence checkpoints,
+            @Value("${app.asr.language:uk}") String language) {
+        this.assets = assets;
+        this.transcriptions = transcriptions;
+        this.storage = storage;
+        this.transcriber = transcriber;
+        this.checkpoints = checkpoints;
+        this.language = language == null || language.isBlank() ? "uk" : language.trim();
+    }
 
     public TranscriptionPipelineService(
             MediaAssetRepository assets,
@@ -26,11 +45,7 @@ public class TranscriptionPipelineService {
             ObjectStorage storage,
             SpeechTranscriber transcriber,
             TranscriptionCheckpointPersistence checkpoints) {
-        this.assets = assets;
-        this.transcriptions = transcriptions;
-        this.storage = storage;
-        this.transcriber = transcriber;
-        this.checkpoints = checkpoints;
+        this(assets, transcriptions, storage, transcriber, checkpoints, "uk");
     }
 
     public void transcribe(ImportLease lease, ImportLeaseControl control) {
@@ -67,7 +82,7 @@ public class TranscriptionPipelineService {
                             audio.getDurationSeconds() == null ? 0 : audio.getDurationSeconds(),
                             "normalized.flac",
                             audio.getContentType(),
-                            null));
+                            language));
             if (!control.isValid()) {
                 checkpoints.markStale(attempt.id());
                 throw new LeaseLostException(lease);

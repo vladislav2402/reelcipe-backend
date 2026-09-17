@@ -54,7 +54,8 @@ class TranscriptionPipelineServiceTest {
                 checkpoints);
         service.transcribe(lease(importId), new ImportLeaseControl());
 
-        verify(transcriber).transcribe(any(), any());
+        verify(transcriber).transcribe(
+                any(), argThat(request -> "uk".equals(request.language())));
         verify(checkpoints).checkpoint(
                 any(), eq(started), eq(audio.getId()), eq(audio.getProcessingKey()),
                 eq("audio-hash"), eq(4), any());
