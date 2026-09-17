@@ -2,6 +2,7 @@ package com.reelcipe.imports;
 
 import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
+import com.reelcipe.imports.source.SourceResolver;
 import com.reelcipe.storage.ObjectStorage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -18,7 +19,7 @@ import java.util.HexFormat;
 
 @Service
 @ConditionalOnProperty(name = "app.role", havingValue = "worker")
-public class LocalFixtureResolver {
+public class LocalFixtureResolver implements SourceResolver {
     private static final String PREFIX = "fixture://";
 
     private final ImportJobRepository jobs;
@@ -42,6 +43,7 @@ public class LocalFixtureResolver {
     }
 
     @Transactional
+    @Override
     public boolean resolve(ImportLease lease, ImportLeaseControl control) {
         ImportJob job = jobs.findFencedForUpdate(
                         lease.importId(),
@@ -96,6 +98,13 @@ public class LocalFixtureResolver {
             throw new ImportProcessingException(
                     ImportFailure.transientError("LOCAL_FIXTURE_READ_FAILED"), exception);
         }
+    }
+
+    @Override
+    public boolean supports(ImportJob job) {
+        return job.getSourceType() == ImportSourceType.LINK
+                && job.getSourceUrl() != null
+                && job.getSourceUrl().startsWith(PREFIX);
     }
 
     private Path fixturePath(String sourceUrl) {

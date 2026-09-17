@@ -90,6 +90,12 @@ app:
     max-upload-attempts: ${APP_IMPORT_MAX_UPLOAD_ATTEMPTS:3}
     processing-ttl: ${APP_IMPORT_PROCESSING_TTL:PT48H}
     local-fixtures-directory: ${APP_IMPORT_LOCAL_FIXTURES_DIRECTORY:${user.dir}/.local/fixtures}
+    source:
+      read-timeout: ${APP_IMPORT_SOURCE_READ_TIMEOUT:PT60S}
+      max-bytes: ${APP_IMPORT_SOURCE_MAX_BYTES:104857600}
+      max-redirects: ${APP_IMPORT_SOURCE_MAX_REDIRECTS:3}
+      temp-directory: ${APP_IMPORT_SOURCE_TEMP_DIRECTORY:${java.io.tmpdir}/reelcipe-source}
+      allow-local-addresses: ${APP_IMPORT_SOURCE_ALLOW_LOCAL_ADDRESSES:false}
   storage:
     provider: ${APP_STORAGE_PROVIDER:s3}
     endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9090}

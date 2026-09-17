@@ -9,6 +9,8 @@ import com.reelcipe.common.UuidV7;
 import com.reelcipe.idempotency.IdempotencyService;
 import com.reelcipe.idempotency.domain.IdempotencyResult;
 import com.reelcipe.imports.domain.*;
+import com.reelcipe.imports.source.DescriptionAvailability;
+import com.reelcipe.imports.source.SourceAvailability;
 import com.reelcipe.recipes.domain.RecipeImportResult;
 import com.reelcipe.recipes.domain.RecipeImportResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -183,8 +185,11 @@ public class ImportService {
                 || job.getStatus() == ImportStatus.EXPIRED;
         return new ImportView(
                 job.getId(), job.getClientRequestId(), job.getSourceType(), job.getSourceUrl(),
+                job.getCanonicalSourceUrl(),
                 job.getMediaKind(), job.getFileName(), job.getContentType(), job.getExpectedSizeBytes(),
-                job.getDescriptionText(), job.getStatus(), job.getResumeStage(), job.getInputRevision(),
+                job.getDescriptionText(), job.getAuthorDescription(), job.getUserText(),
+                job.getSourceAvailability(), job.getDescriptionAvailability(),
+                job.getStatus(), job.getResumeStage(), job.getInputRevision(),
                 job.getAttempts(), job.getAttemptStage(), job.getStageAttempts(),
                 job.getNextAttemptAt(), job.getProcessingDeadlineAt(),
                 job.getInputDeadlineAt(), job.getErrorCode(), job.getCreatedAt(), job.getUpdatedAt(),
@@ -266,11 +271,16 @@ public class ImportService {
             UUID clientRequestId,
             ImportSourceType sourceType,
             String sourceUrl,
+            String canonicalSourceUrl,
             ImportMediaKind mediaKind,
             String fileName,
             String contentType,
             Long sizeBytes,
             String descriptionText,
+            String authorDescription,
+            String userText,
+            SourceAvailability sourceAvailability,
+            DescriptionAvailability descriptionAvailability,
             ImportStatus status,
             ImportStage resumeStage,
             long inputRevision,

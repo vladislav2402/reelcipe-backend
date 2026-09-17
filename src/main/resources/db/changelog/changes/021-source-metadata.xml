@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+    <changeSet id="021-source-metadata" author="reelcipe">
+        <addColumn tableName="import_jobs">
+            <column name="canonical_source_url" type="VARCHAR(2000)"/>
+            <column name="author_description" type="TEXT"/>
+            <column name="user_text" type="TEXT"/>
+            <column name="source_availability" type="VARCHAR(32)"/>
+            <column name="description_availability" type="VARCHAR(32)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

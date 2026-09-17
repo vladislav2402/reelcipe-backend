@@ -1,5 +1,7 @@
 package com.reelcipe.imports.domain;
 
+import com.reelcipe.imports.source.DescriptionAvailability;
+import com.reelcipe.imports.source.SourceAvailability;
 import jakarta.persistence.*;
 
 import java.time.Clock;
@@ -50,6 +52,8 @@ public class ImportJob {
     private ImportSourceType sourceType;
     @Column(name = "source_url")
     private String sourceUrl;
+    @Column(name = "canonical_source_url")
+    private String canonicalSourceUrl;
     @Enumerated(EnumType.STRING)
     @Column(name = "media_kind")
     private ImportMediaKind mediaKind;
@@ -61,6 +65,16 @@ public class ImportJob {
     private Long expectedSizeBytes;
     @Column(name = "description_text")
     private String descriptionText;
+    @Column(name = "author_description")
+    private String authorDescription;
+    @Column(name = "user_text")
+    private String userText;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source_availability")
+    private SourceAvailability sourceAvailability;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "description_availability")
+    private DescriptionAvailability descriptionAvailability;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ImportStatus status;
@@ -152,6 +166,11 @@ public class ImportJob {
         this.contentType = contentType;
         this.expectedSizeBytes = expectedSizeBytes;
         this.descriptionText = descriptionText;
+        this.userText = descriptionText;
+        this.sourceAvailability = SourceAvailability.UNKNOWN;
+        this.descriptionAvailability = descriptionText == null || descriptionText.isBlank()
+                ? DescriptionAvailability.EMPTY
+                : DescriptionAvailability.PRESENT;
         this.inputHash = inputHash;
         this.inputRevision = 1;
         this.status = status;
@@ -403,6 +422,10 @@ public class ImportJob {
         return sourceUrl;
     }
 
+    public String getCanonicalSourceUrl() {
+        return canonicalSourceUrl;
+    }
+
     public ImportMediaKind getMediaKind() {
         return mediaKind;
     }
@@ -421,6 +444,51 @@ public class ImportJob {
 
     public String getDescriptionText() {
         return descriptionText;
+    }
+
+    public String getAuthorDescription() {
+        return authorDescription;
+    }
+
+    public String getUserText() {
+        return userText == null ? descriptionText : userText;
+    }
+
+    public SourceAvailability getSourceAvailability() {
+        return sourceAvailability == null ? SourceAvailability.UNKNOWN : sourceAvailability;
+    }
+
+    public DescriptionAvailability getDescriptionAvailability() {
+        if (descriptionAvailability != null) {
+            return descriptionAvailability;
+        }
+        return getUserText() == null || getUserText().isBlank()
+                ? DescriptionAvailability.EMPTY
+                : DescriptionAvailability.PRESENT;
+    }
+
+    public void recordSourceMetadata(
+            String canonicalUrl,
+            String authorDescription,
+            String userText,
+            SourceAvailability availability,
+            DescriptionAvailability descriptionAvailability,
+            Clock clock) {
+        this.canonicalSourceUrl = canonicalUrl;
+        this.authorDescription = authorDescription;
+        this.userText = userText;
+        this.sourceAvailability = availability;
+        this.descriptionAvailability = descriptionAvailability;
+        this.updatedAt = clock.instant();
+    }
+
+    public void recordResolvedMedia(String resolvedContentType, long resolvedSizeBytes, Clock clock) {
+        this.contentType = resolvedContentType;
+        this.expectedSizeBytes = resolvedSizeBytes;
+        this.mediaKind = resolvedContentType != null && resolvedContentType.startsWith("video/")
+                ? ImportMediaKind.VIDEO
+                : ImportMediaKind.AUDIO;
+        this.updatedAt = clock.instant();
     }
 
     public ImportStatus getStatus() {
