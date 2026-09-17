@@ -35,6 +35,8 @@ public class Transcription {
     private String provider;
     @Column(nullable = false)
     private String model;
+    @Column(name = "provider_request_id")
+    private String providerRequestId;
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
     @Column(name = "updated_at", nullable = false)
@@ -57,6 +59,7 @@ public class Transcription {
             int durationSeconds,
             String provider,
             String model,
+            String providerRequestId,
             Instant now) {
         this.id = id;
         this.importId = importId;
@@ -71,8 +74,42 @@ public class Transcription {
         this.durationSeconds = durationSeconds;
         this.provider = provider;
         this.model = model;
+        this.providerRequestId = providerRequestId;
         this.createdAt = now;
         this.updatedAt = now;
+    }
+
+    public Transcription(
+            UUID id,
+            UUID importId,
+            UUID userId,
+            UUID audioAssetId,
+            int version,
+            String inputHash,
+            String language,
+            SpeechStatus speechStatus,
+            String transcriptHash,
+            String fullText,
+            int durationSeconds,
+            String provider,
+            String model,
+            Instant now) {
+        this(
+                id,
+                importId,
+                userId,
+                audioAssetId,
+                version,
+                inputHash,
+                language,
+                speechStatus,
+                transcriptHash,
+                fullText,
+                durationSeconds,
+                provider,
+                model,
+                null,
+                now);
     }
 
     public UUID getId() {
@@ -101,6 +138,10 @@ public class Transcription {
 
     public SpeechStatus getSpeechStatus() {
         return speechStatus;
+    }
+
+    public String getProviderRequestId() {
+        return providerRequestId;
     }
 
     public String getTranscriptHash() {

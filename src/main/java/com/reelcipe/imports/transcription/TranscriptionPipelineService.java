@@ -64,7 +64,10 @@ public class TranscriptionPipelineService {
                     input,
                     new SpeechTranscriber.Request(
                             audio.getSha256(),
-                            audio.getDurationSeconds() == null ? 0 : audio.getDurationSeconds()));
+                            audio.getDurationSeconds() == null ? 0 : audio.getDurationSeconds(),
+                            "normalized.flac",
+                            audio.getContentType(),
+                            null));
             if (!control.isValid()) {
                 checkpoints.markStale(attempt.id());
                 throw new LeaseLostException(lease);

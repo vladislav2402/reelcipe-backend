@@ -105,7 +105,7 @@ public class TranscriptionCheckpointPersistence {
         attempts.save(attempt);
         com.reelcipe.providers.ProviderAdmissionService.ConsumeResult settlement = admissions.consume(
                 started.admissionId(),
-                result.usage().units() + result.usage().inputSeconds());
+                result.usage().units());
         if (!settlement.accepted()) {
             attempt.markUnknown("PROVIDER_USAGE_OVER_BUDGET", clock);
             attempts.save(attempt);
@@ -192,6 +192,7 @@ public class TranscriptionCheckpointPersistence {
                 durationSeconds,
                 provider,
                 model,
+                result.providerRequestId(),
                 clock.instant());
         transcriptions.save(transcription);
         for (int index = 0; index < result.segments().size(); index++) {

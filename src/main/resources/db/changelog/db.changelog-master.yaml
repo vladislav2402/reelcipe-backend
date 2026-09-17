@@ -53,3 +53,6 @@ databaseChangeLog:
   - include:
       file: changes/018-provider-admission.xml
       relativeToChangelogFile: true
+  - include:
+      file: changes/019-groq-transcription.xml
+      relativeToChangelogFile: true

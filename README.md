@@ -37,6 +37,18 @@ through the presigned S3 flow and waits for ASR, mock LLM, validation, Save and 
 No provider network calls are made. The mock ASR/LLM responses are selected by the explicit
 fixture marker `reelcipe-b23-fixture:recipe-video-v1`.
 
+The real Groq ASR adapter is disabled by default. To enable it explicitly for a local run,
+provide the key through the environment without committing it:
+
+```powershell
+$env:APP_PROVIDERS_REAL_CALLS_ENABLED = 'true'
+$env:APP_ASR_PROVIDER = 'groq'
+$env:GROQ_API_KEY = '<local-secret>'
+```
+
+The adapter sends only normalized audio to Groq Whisper and requests `verbose_json` segment
+timestamps. The downstream pipeline remains provider-independent.
+
 To run only the full pipeline scenario, use its Cucumber tag. The independent pipeline check is:
 
 ```powershell

@@ -65,6 +65,7 @@ app:
     http:
       connect-timeout: ${APP_PROVIDERS_HTTP_CONNECT_TIMEOUT:PT5S}
       read-timeout: ${APP_PROVIDERS_HTTP_READ_TIMEOUT:PT60S}
+      max-request-bytes: ${APP_PROVIDERS_HTTP_MAX_REQUEST_BYTES:26214400}
       max-response-bytes: ${APP_PROVIDERS_HTTP_MAX_RESPONSE_BYTES:1048576}
       api-rate-limit-per-minute: ${APP_PROVIDERS_API_RATE_LIMIT_PER_MINUTE:60}
     circuit-breaker:
@@ -111,6 +112,7 @@ app:
   asr:
     provider: ${APP_ASR_PROVIDER:mock}
     mock-model: ${APP_ASR_MOCK_MODEL:reelcipe-mock-asr-v1}
+    groq-model: ${APP_ASR_GROQ_MODEL:whisper-large-v3-turbo}
   llm:
     provider: ${APP_LLM_PROVIDER:mock}
     mock-model: ${APP_LLM_MOCK_MODEL:reelcipe-mock-llm-v1}
