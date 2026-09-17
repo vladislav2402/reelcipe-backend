@@ -242,7 +242,9 @@ public class RecipeFinalizationService {
                 : segments.findByTranscriptionIdOrderBySegmentIndex(transcription.getId()).stream()
                 .map(this::segment)
                 .toList();
-        String language = candidate.getLanguage().toLowerCase();
+        SnapshotLanguages languages = snapshotLanguages(
+                transcription == null ? null : transcription.getLanguage(),
+                candidate.getLanguage());
         return new RecipeTextSnapshot(
                 candidate.getTranscriptionId(),
                 candidate.getTranscriptionVersion() == null ? 0 : candidate.getTranscriptionVersion(),
@@ -252,13 +254,22 @@ public class RecipeFinalizationService {
                 null,
                 job.getAudioOutcome(),
                 transcription == null ? null : transcription.getSpeechStatus(),
-                language,
-                language,
+                languages.sourceLanguage(),
+                languages.targetLanguage(),
                 candidate.getPromptVersion(),
                 candidate.getSchemaVersion(),
                 candidate.getPipelineVersion(),
                 candidate.getProvider(),
                 candidate.getModel());
+    }
+
+    static SnapshotLanguages snapshotLanguages(String sourceLanguage, String targetLanguage) {
+        return new SnapshotLanguages(
+                sourceLanguage == null ? targetLanguage : sourceLanguage,
+                targetLanguage);
+    }
+
+    record SnapshotLanguages(String sourceLanguage, String targetLanguage) {
     }
 
     private RecipeTextSnapshot.TranscriptSegment segment(TranscriptionSegment segment) {
