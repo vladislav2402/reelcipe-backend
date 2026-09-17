@@ -4,6 +4,7 @@ import com.reelcipe.auth.domain.User;
 import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserStatus;
 import com.reelcipe.billing.QuotaService;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.ImportJobRepository;
 import com.reelcipe.imports.domain.ImportSourceType;
 import com.reelcipe.imports.domain.ImportStatus;
@@ -56,7 +57,7 @@ class ImportCreationIntegrationTest {
     @Test
     void twentyIdenticalRequestsCreateOneJobAndOneReservation() throws Exception {
         UUID userId = createUser();
-        UUID clientRequestId = UUID.randomUUID();
+        UUID clientRequestId = UuidV7.randomUuid();
         ImportService.ImportCommand command = link(clientRequestId);
         ExecutorService executor = Executors.newFixedThreadPool(20);
         try {
@@ -81,10 +82,10 @@ class ImportCreationIntegrationTest {
     @Test
     void activeImportLimitIsEnforced() {
         UUID userId = createUser();
-        imports.create(userId, "key-1", link(UUID.randomUUID()));
-        imports.create(userId, "key-2", link(UUID.randomUUID()));
+        imports.create(userId, "key-1", link(UuidV7.randomUuid()));
+        imports.create(userId, "key-2", link(UuidV7.randomUuid()));
 
-        assertThatThrownBy(() -> imports.create(userId, "key-3", link(UUID.randomUUID())))
+        assertThatThrownBy(() -> imports.create(userId, "key-3", link(UuidV7.randomUuid())))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting(exception -> ((ResponseStatusException) exception).getStatusCode().value())
                 .isEqualTo(409);
@@ -94,9 +95,9 @@ class ImportCreationIntegrationTest {
     void quotaFailureRollsBackCreatedJob() {
         UUID userId = createUser();
         for (int i = 0; i < 10; i++) {
-            quota.reserve(userId, UUID.randomUUID());
+            quota.reserve(userId, UuidV7.randomUuid());
         }
-        UUID clientRequestId = UUID.randomUUID();
+        UUID clientRequestId = UuidV7.randomUuid();
 
         assertThatThrownBy(() -> imports.create(userId, "quota-key", link(clientRequestId)))
                 .isInstanceOf(ResponseStatusException.class)
@@ -109,7 +110,7 @@ class ImportCreationIntegrationTest {
     void foreignUserCannotReadImport() {
         UUID ownerId = createUser();
         UUID foreignId = createUser();
-        ImportService.ImportView created = imports.create(ownerId, "owner-key", link(UUID.randomUUID()));
+        ImportService.ImportView created = imports.create(ownerId, "owner-key", link(UuidV7.randomUuid()));
 
         assertThatThrownBy(() -> imports.get(foreignId, created.id()))
                 .isInstanceOf(ResponseStatusException.class)
@@ -118,7 +119,7 @@ class ImportCreationIntegrationTest {
     }
 
     private UUID createUser() {
-        UUID id = UUID.randomUUID();
+        UUID id = UuidV7.randomUuid();
         Instant now = Instant.now();
         users.saveAndFlush(new User(id, "Import test", UserStatus.ACTIVE, now, now));
         return id;

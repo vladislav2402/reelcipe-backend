@@ -4,6 +4,7 @@ import com.reelcipe.auth.domain.User;
 import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserStatus;
 import com.reelcipe.billing.QuotaService;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ImportLifecycleServiceTest {
-    private static final UUID USER_ID = UUID.randomUUID();
+    private static final UUID USER_ID = UuidV7.randomUuid();
     private static final Instant NOW = Instant.parse("2026-09-15T12:00:00Z");
 
     @Mock
@@ -86,9 +87,9 @@ class ImportLifecycleServiceTest {
 
     private ImportJob job(ImportStatus status) {
         return new ImportJob(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 USER_ID,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 ImportSourceType.LINK,
                 "https://example.com/video",
                 "hash-v1",

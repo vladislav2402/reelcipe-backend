@@ -2,6 +2,7 @@ package com.reelcipe.recipes;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.idempotency.IdempotencyService;
 import com.reelcipe.idempotency.domain.IdempotencyResult;
 import com.reelcipe.recipes.domain.*;
@@ -116,7 +117,7 @@ public class RecipeService {
 
     private RecipeView createNew(UUID userId, RecipeCommand command) {
         Recipe recipe = new Recipe(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 userId,
                 command.title(),
                 command.language(),
@@ -166,7 +167,7 @@ public class RecipeService {
             IngredientCommand c = ingredientCommands.get(i);
             UUID ingredientId = i < existingIngredients.size()
                     ? existingIngredients.get(i).getId()
-                    : UUID.randomUUID();
+                    : UuidV7.randomUuid();
             ingredients.save(new RecipeIngredient(
                     ingredientId,
                     recipe.getId(),
@@ -181,7 +182,7 @@ public class RecipeService {
             StepCommand c = stepCommands.get(i);
             UUID stepId = i < existingSteps.size()
                     ? existingSteps.get(i).getId()
-                    : UUID.randomUUID();
+                    : UuidV7.randomUuid();
             steps.save(new RecipeStep(stepId, recipe.getId(), i, c.text()));
         }
     }

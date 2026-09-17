@@ -1,5 +1,6 @@
 package com.reelcipe.imports;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.storage.ObjectStorage;
 import org.junit.jupiter.api.Test;
@@ -32,8 +33,8 @@ class ProcessingCopyServiceTest {
     @Test
     void streamsSourceComputesHashAndPersistsServerOwnedCopy() throws Exception {
         byte[] content = "source-bytes".getBytes(StandardCharsets.UTF_8);
-        UUID importId = UUID.randomUUID();
-        UUID assetId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
+        UUID assetId = UuidV7.randomUuid();
         MediaAsset asset = sourceAsset(importId, assetId, content.length);
         MediaAssetRepository assets = mock(MediaAssetRepository.class);
         ObjectStorage storage = mock(ObjectStorage.class);
@@ -68,8 +69,8 @@ class ProcessingCopyServiceTest {
 
     @Test
     void doesNotReadStagingAgainWhenProcessingCopyIsAlreadyCommitted() throws Exception {
-        UUID importId = UUID.randomUUID();
-        MediaAsset asset = sourceAsset(importId, UUID.randomUUID(), 4);
+        UUID importId = UuidV7.randomUuid();
+        MediaAsset asset = sourceAsset(importId, UuidV7.randomUuid(), 4);
         asset.recordProcessingCopy("processing/existing", "hash", 4, CLOCK);
         MediaAssetRepository assets = mock(MediaAssetRepository.class);
         ObjectStorage storage = mock(ObjectStorage.class);
@@ -89,8 +90,8 @@ class ProcessingCopyServiceTest {
     @Test
     void keepsProcessingObjectWhenFencedCheckpointRejectsStaleLease() throws Exception {
         byte[] content = "source".getBytes(StandardCharsets.UTF_8);
-        UUID importId = UUID.randomUUID();
-        UUID assetId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
+        UUID assetId = UuidV7.randomUuid();
         MediaAsset asset = sourceAsset(importId, assetId, content.length);
         MediaAssetRepository assets = mock(MediaAssetRepository.class);
         ObjectStorage storage = mock(ObjectStorage.class);
@@ -116,8 +117,8 @@ class ProcessingCopyServiceTest {
 
     @Test
     void rejectsActualBytesAboveConfiguredLimit() throws Exception {
-        UUID importId = UUID.randomUUID();
-        MediaAsset asset = sourceAsset(importId, UUID.randomUUID(), 5);
+        UUID importId = UuidV7.randomUuid();
+        MediaAsset asset = sourceAsset(importId, UuidV7.randomUuid(), 5);
         MediaAssetRepository assets = mock(MediaAssetRepository.class);
         ObjectStorage storage = mock(ObjectStorage.class);
         ProcessingCopyPersistence persistence = mock(ProcessingCopyPersistence.class);
@@ -145,8 +146,8 @@ class ProcessingCopyServiceTest {
         return new MediaAsset(
                 assetId,
                 importId,
-                UUID.randomUUID(),
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
+                UuidV7.randomUuid(),
                 MediaAssetType.SOURCE,
                 "staging/source",
                 sizeBytes,
@@ -158,7 +159,7 @@ class ProcessingCopyServiceTest {
     private ImportLease lease(UUID importId, UUID assetId, long version) {
         return new ImportLease(
                 importId,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 "worker-1",
                 version,
                 1,

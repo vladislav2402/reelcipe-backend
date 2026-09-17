@@ -1,14 +1,15 @@
 package com.reelcipe.bootstrap;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.core.env.Environment;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @RestController
 @ConditionalOnProperty(name = "app.role", havingValue = "api")
@@ -29,7 +30,7 @@ public class ApiDiagnosticsController {
 
     public ApiDiagnosticsController(
             Environment environment,
-            @Value("${app.instance-id:local-api}") String instanceId,
+            @Qualifier("instanceId") String instanceId,
             @Value("${app.limits.max-media-duration-seconds:180}") int maxMediaDurationSeconds,
             @Value("${app.limits.max-video-size-bytes:104857600}") long maxVideoSizeBytes,
             @Value("${app.limits.max-audio-size-bytes:20971520}") long maxAudioSizeBytes,

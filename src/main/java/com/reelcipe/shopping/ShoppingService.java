@@ -2,6 +2,7 @@ package com.reelcipe.shopping;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.idempotency.IdempotencyService;
 import com.reelcipe.idempotency.domain.IdempotencyResult;
 import com.reelcipe.recipes.domain.Recipe;
@@ -122,7 +123,7 @@ public class ShoppingService {
         List<RecipeIngredient> recipeIngredients = ingredients.findByRecipeIdOrderByPosition(recipe.getId());
         for (RecipeIngredient ingredient : recipeIngredients) {
             ShoppingItem item = new ShoppingItem(
-                    UUID.randomUUID(),
+                    UuidV7.randomUuid(),
                     list.getId(),
                     ingredient.getName(),
                     ingredient.getAmount(),
@@ -130,7 +131,7 @@ public class ShoppingService {
                     Instant.now());
             items.save(item);
             sources.save(new ShoppingItemSource(
-                    UUID.randomUUID(),
+                    UuidV7.randomUuid(),
                     list.getId(),
                     item.getId(),
                     recipe.getId(),
@@ -146,7 +147,7 @@ public class ShoppingService {
 
     private ShoppingView createItem(UUID userId, ShoppingList list, ItemCommand command) {
         ShoppingItem item = new ShoppingItem(
-                UUID.randomUUID(), list.getId(), command.name(), command.amount(), command.unit(), Instant.now());
+                UuidV7.randomUuid(), list.getId(), command.name(), command.amount(), command.unit(), Instant.now());
         items.save(item);
         list.touch(Instant.now());
         lists.save(list);
@@ -188,7 +189,7 @@ public class ShoppingService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication is required");
         }
         return lists.findByUserId(userId).orElseGet(() -> lists.save(new ShoppingList(
-                UUID.randomUUID(), userId, Instant.now())));
+                UuidV7.randomUuid(), userId, Instant.now())));
     }
 
     private ShoppingList lockedList(UUID userId) {

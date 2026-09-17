@@ -1,5 +1,6 @@
 package com.reelcipe.imports.transcription;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.ImportLeaseControl;
 import com.reelcipe.imports.ImportProcessingException;
 import com.reelcipe.imports.domain.*;
@@ -22,7 +23,7 @@ class TranscriptionPipelineServiceTest {
 
     @Test
     void sendsAudioOutsidePersistenceAndCheckpointsResult() {
-        UUID importId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
         MediaAsset audio = audio(importId);
         MediaAssetRepository assets = mock(MediaAssetRepository.class);
         TranscriptionRepository transcriptions = mock(TranscriptionRepository.class);
@@ -37,7 +38,7 @@ class TranscriptionPipelineServiceTest {
                 .thenReturn(Optional.empty());
         TranscriptionCheckpointPersistence.StartedAttempt started =
                 new TranscriptionCheckpointPersistence.StartedAttempt(
-                        UUID.randomUUID(), "mock", "mock-v1");
+                        UuidV7.randomUuid(), "mock", "mock-v1");
         when(checkpoints.start(any(), eq("audio-hash"))).thenReturn(started);
         when(transcriber.transcribe(any(), any())).thenReturn(new SpeechTranscriber.Result(
                 "en",
@@ -61,7 +62,7 @@ class TranscriptionPipelineServiceTest {
 
     @Test
     void marksUnknownAttemptAndReturnsRetryableFailure() {
-        UUID importId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
         MediaAsset audio = audio(importId);
         MediaAssetRepository assets = mock(MediaAssetRepository.class);
         TranscriptionRepository transcriptions = mock(TranscriptionRepository.class);
@@ -74,7 +75,7 @@ class TranscriptionPipelineServiceTest {
         when(transcriptions.findTopByImportIdAndAudioAssetIdOrderByVersionDesc(
                 importId, audio.getId()))
                 .thenReturn(Optional.empty());
-        UUID attemptId = UUID.randomUUID();
+        UUID attemptId = UuidV7.randomUuid();
         when(checkpoints.start(any(), eq("audio-hash"))).thenReturn(
                 new TranscriptionCheckpointPersistence.StartedAttempt(
                         attemptId, "mock", "mock-v1"));
@@ -100,9 +101,9 @@ class TranscriptionPipelineServiceTest {
 
     private MediaAsset audio(UUID importId) {
         return MediaAsset.normalizedAudio(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 importId,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 "processing/audio.flac",
                 "audio-hash",
                 3,
@@ -114,7 +115,7 @@ class TranscriptionPipelineServiceTest {
     private ImportLease lease(UUID importId) {
         return new ImportLease(
                 importId,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 "worker-1",
                 1,
                 1,

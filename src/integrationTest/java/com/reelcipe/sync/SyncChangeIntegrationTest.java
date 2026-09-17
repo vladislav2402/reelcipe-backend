@@ -1,5 +1,6 @@
 package com.reelcipe.sync;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.sync.domain.SyncChange;
 import com.reelcipe.sync.domain.SyncChangeRepository;
 import org.junit.jupiter.api.Test;
@@ -54,7 +55,7 @@ class SyncChangeIntegrationTest {
         List<Future<SyncChange>> futures = new ArrayList<>();
 
         for (int index = 0; index < 2; index++) {
-            UUID entityId = UUID.randomUUID();
+            UUID entityId = UuidV7.randomUuid();
             futures.add(executor.submit(() -> {
                 start.await();
                 return syncChangeService.record(userId, "recipe", entityId, "UPDATE", 1);
@@ -77,7 +78,7 @@ class SyncChangeIntegrationTest {
         assertThat(org.junit.jupiter.api.Assertions.assertThrows(
                 RuntimeException.class,
                 () -> transaction.execute(status -> {
-                    syncChangeService.record(userId, "recipe", UUID.randomUUID(), "DELETE", 1);
+                    syncChangeService.record(userId, "recipe", UuidV7.randomUuid(), "DELETE", 1);
                     throw new RuntimeException("rollback");
                 }))).hasMessage("rollback");
 

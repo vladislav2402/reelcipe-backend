@@ -1,6 +1,7 @@
 package com.reelcipe.shopping;
 
 import com.reelcipe.auth.FixtureUserInitializer;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.shopping.domain.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,16 +38,16 @@ class ShoppingRepositoryIntegrationTest {
 
     @Test
     void repositoriesPersistShoppingSnapshotAndSource() {
-        UUID listId = UUID.randomUUID();
-        UUID itemId = UUID.randomUUID();
-        UUID recipeId = UUID.randomUUID();
-        UUID ingredientId = UUID.randomUUID();
-        UUID additionId = UUID.randomUUID();
+        UUID listId = UuidV7.randomUuid();
+        UUID itemId = UuidV7.randomUuid();
+        UUID recipeId = UuidV7.randomUuid();
+        UUID ingredientId = UuidV7.randomUuid();
+        UUID additionId = UuidV7.randomUuid();
         Instant now = Instant.now();
         lists.save(new ShoppingList(listId, FixtureUserInitializer.ALICE_ID, now));
         items.save(new ShoppingItem(itemId, listId, "Flour", null, "g", now));
         sources.save(new ShoppingItemSource(
-                UUID.randomUUID(), listId, itemId, recipeId, 1L, ingredientId, additionId));
+                UuidV7.randomUuid(), listId, itemId, recipeId, 1L, ingredientId, additionId));
 
         assertThat(lists.findByUserId(FixtureUserInitializer.ALICE_ID)).isPresent();
         assertThat(items.findByListIdAndDeletedAtIsNullOrderByCreatedAtAsc(listId)).hasSize(1);

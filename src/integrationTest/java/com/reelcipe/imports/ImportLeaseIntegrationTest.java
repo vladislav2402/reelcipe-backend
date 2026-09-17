@@ -1,6 +1,7 @@
 package com.reelcipe.imports;
 
 import com.reelcipe.auth.FixtureUserInitializer;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -90,11 +90,11 @@ class ImportLeaseIntegrationTest {
     private ImportJob saveQueuedJob() {
         Instant now = Instant.now();
         ImportJob job = new ImportJob(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 FixtureUserInitializer.ALICE_ID,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 ImportSourceType.LINK,
-                "https://example.com/" + UUID.randomUUID(),
+                "https://example.com/" + UuidV7.randomUuid(),
                 "hash-v1",
                 ImportStatus.QUEUED,
                 ImportStage.RESOLVING,

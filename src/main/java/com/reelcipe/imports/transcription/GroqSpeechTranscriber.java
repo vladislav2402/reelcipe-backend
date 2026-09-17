@@ -2,6 +2,7 @@ package com.reelcipe.imports.transcription;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.transcription.domain.SpeechStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +26,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @ConditionalOnExpression(
@@ -97,7 +97,7 @@ public class GroqSpeechTranscriber implements SpeechTranscriber {
     public Result transcribe(InputStream audio, Request request) {
         try {
             byte[] bytes = readLimited(audio);
-            String boundary = "----reelcipe-" + UUID.randomUUID();
+            String boundary = "----reelcipe-" + UuidV7.randomUuid();
             byte[] body = multipart(bytes, boundary, request);
             HttpRequest httpRequest = HttpRequest.newBuilder(endpoint)
                     .timeout(timeout)

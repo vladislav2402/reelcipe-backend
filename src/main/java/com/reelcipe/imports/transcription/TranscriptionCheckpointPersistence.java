@@ -1,5 +1,6 @@
 package com.reelcipe.imports.transcription;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.imports.transcription.domain.*;
 import com.reelcipe.operations.deletion.DeletionTaskService;
@@ -58,7 +59,7 @@ public class TranscriptionCheckpointPersistence {
                         lease.importId(), AiAttemptKind.ASR)
                 .map(attempt -> attempt.getAttemptNumber() + 1)
                 .orElse(1);
-        UUID attemptId = UUID.randomUUID();
+        UUID attemptId = UuidV7.randomUuid();
         ProviderAdmissionService.Reservation reservation = admissions.reserve(
                 new ProviderAdmissionService.Request(
                         attemptId,
@@ -182,7 +183,7 @@ public class TranscriptionCheckpointPersistence {
                 .orElse("");
         String transcriptHash = hash(result, fullText);
         Transcription transcription = new Transcription(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 lease.importId(),
                 lease.userId(),
                 audioAssetId,
@@ -201,7 +202,7 @@ public class TranscriptionCheckpointPersistence {
         for (int index = 0; index < result.segments().size(); index++) {
             SpeechTranscriber.Segment segment = result.segments().get(index);
             segments.save(new TranscriptionSegment(
-                    UUID.randomUUID(),
+                    UuidV7.randomUuid(),
                     transcription.getId(),
                     index,
                     segment.startMs(),

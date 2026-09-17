@@ -1,6 +1,7 @@
 package com.reelcipe.recipes;
 
 import com.reelcipe.auth.domain.AuthenticatedUser;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.recipes.domain.RecipeLanguage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,9 +27,9 @@ class RecipeControllerTest {
     @Test
     void createReturnsRecipeVersionInResponse() {
         RecipeController controller = new RecipeController(service);
-        UUID userId = UUID.randomUUID();
-        UUID recipeId = UUID.randomUUID();
-        AuthenticatedUser user = new AuthenticatedUser(userId, UUID.randomUUID());
+        UUID userId = UuidV7.randomUuid();
+        UUID recipeId = UuidV7.randomUuid();
+        AuthenticatedUser user = new AuthenticatedUser(userId, UuidV7.randomUuid());
         RecipeService.RecipeView view = new RecipeService.RecipeView(recipeId, "Pasta", RecipeLanguage.EN, null,
                 com.reelcipe.recipes.domain.RecipeLibraryState.SAVED, 1, Instant.now(), Instant.now(), List.of(), List.of());
         when(service.create(any(), any(), any())).thenReturn(view);
@@ -43,14 +44,14 @@ class RecipeControllerTest {
     void patchRejectsMalformedIfMatch() {
         RecipeController controller = new RecipeController(service);
         assertThrows(ResponseStatusException.class, () -> controller.patch(
-                new AuthenticatedUser(UUID.randomUUID(), UUID.randomUUID()), UUID.randomUUID(), "bad", "key",
+                new AuthenticatedUser(UuidV7.randomUuid(), UuidV7.randomUuid()), UuidV7.randomUuid(), "bad", "key",
                 new RecipeController.RecipeRequest("Pasta", RecipeLanguage.EN, List.of(), List.of())));
     }
 
     @Test
     void saveReturnsUpdatedDraftVersion() {
         RecipeController controller = new RecipeController(service);
-        UUID recipeId = UUID.randomUUID();
+        UUID recipeId = UuidV7.randomUuid();
         RecipeService.RecipeView view = new RecipeService.RecipeView(
                 recipeId,
                 "Pasta",
@@ -65,7 +66,7 @@ class RecipeControllerTest {
         when(service.save(any(), any(), any())).thenReturn(view);
 
         var response = controller.save(
-                new AuthenticatedUser(UUID.randomUUID(), UUID.randomUUID()), recipeId, "save-key");
+                new AuthenticatedUser(UuidV7.randomUuid(), UuidV7.randomUuid()), recipeId, "save-key");
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals("\"2\"", response.getHeaders().getETag());

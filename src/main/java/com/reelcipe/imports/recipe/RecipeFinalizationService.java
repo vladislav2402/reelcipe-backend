@@ -3,6 +3,7 @@ package com.reelcipe.imports.recipe;
 import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserStatus;
 import com.reelcipe.billing.QuotaService;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.ImportProcessingException;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.imports.recipe.domain.RecipeCandidate;
@@ -108,7 +109,7 @@ public class RecipeFinalizationService {
 
         Instant now = clock.instant();
         Recipe recipe = new Recipe(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 lease.userId(),
                 validation.document().title(),
                 validation.document().language(),
@@ -126,7 +127,7 @@ public class RecipeFinalizationService {
                 candidate.getCandidateJson(),
                 now));
         imports.save(new RecipeImportResult(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 recipe.getId(),
                 lease.importId(),
                 lease.userId(),
@@ -154,7 +155,7 @@ public class RecipeFinalizationService {
         for (int index = 0; index < values.size(); index++) {
             RecipeCandidateSemanticValidator.Ingredient value = values.get(index);
             ingredients.save(new RecipeIngredient(
-                    UUID.randomUUID(),
+                    UuidV7.randomUuid(),
                     recipe.getId(),
                     index,
                     value.name(),
@@ -171,7 +172,7 @@ public class RecipeFinalizationService {
         for (int index = 0; index < values.size(); index++) {
             RecipeCandidateSemanticValidator.Step value = values.get(index);
             steps.save(new RecipeStep(
-                    UUID.randomUUID(),
+                    UuidV7.randomUuid(),
                     recipe.getId(),
                     index,
                     value.text()));
@@ -208,7 +209,7 @@ public class RecipeFinalizationService {
             RecipeCandidateSemanticValidator.Evidence item,
             Instant now) {
         return new RecipeEvidence(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 recipe.getId(),
                 ingredientId,
                 stepId,

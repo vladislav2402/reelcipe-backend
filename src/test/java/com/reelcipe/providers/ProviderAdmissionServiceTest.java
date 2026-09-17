@@ -1,5 +1,6 @@
 package com.reelcipe.providers;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.providers.domain.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,7 +12,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -67,7 +67,7 @@ class ProviderAdmissionServiceTest {
                 NOW);
         when(admissions.findLockedById(reservation.id())).thenReturn(Optional.of(admission));
         ProviderUserFailure failure = new ProviderUserFailure(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 request(10).userId(),
                 "stub",
                 NOW.minusSeconds(3600),
@@ -98,7 +98,7 @@ class ProviderAdmissionServiceTest {
 
     private ProviderBudgetPeriod budget(long units, int concurrency) {
         return new ProviderBudgetPeriod(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 "stub",
                 NOW.truncatedTo(java.time.temporal.ChronoUnit.DAYS),
                 NOW.plusSeconds(12 * 3600),
@@ -109,9 +109,9 @@ class ProviderAdmissionServiceTest {
 
     private ProviderAdmissionService.Request request(long units) {
         return new ProviderAdmissionService.Request(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
+                UuidV7.randomUuid(),
+                UuidV7.randomUuid(),
                 "stub",
                 "ASR",
                 units);

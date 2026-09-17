@@ -1,6 +1,7 @@
 package com.reelcipe.providers;
 
 import com.reelcipe.auth.FixtureUserInitializer;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,7 @@ class ProviderAdmissionIntegrationTest {
 
     @Test
     void concurrentWorkersCannotReserveTheSameLastBudgetSlot() {
-        String provider = "b24-race-" + UUID.randomUUID();
+        String provider = "b24-race-" + UuidV7.randomUuid();
         UUID firstImport = createImport();
         UUID secondImport = createImport();
         AtomicInteger success = new AtomicInteger();
@@ -59,12 +60,12 @@ class ProviderAdmissionIntegrationTest {
     }
 
     private UUID createImport() {
-        UUID id = UUID.randomUUID();
+        UUID id = UuidV7.randomUuid();
         Instant now = Instant.now();
         jobs.save(new ImportJob(
                 id,
                 FixtureUserInitializer.ALICE_ID,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 ImportSourceType.LINK,
                 "https://example.com/" + id,
                 "b24-" + id,
@@ -79,7 +80,7 @@ class ProviderAdmissionIntegrationTest {
     private void reserve(String provider, UUID importId, AtomicInteger success) {
         try {
             admissions.reserve(new ProviderAdmissionService.Request(
-                    UUID.randomUUID(),
+                    UuidV7.randomUuid(),
                     importId,
                     FixtureUserInitializer.ALICE_ID,
                     provider,

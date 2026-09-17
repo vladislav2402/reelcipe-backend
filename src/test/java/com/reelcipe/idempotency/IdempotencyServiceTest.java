@@ -1,6 +1,7 @@
 package com.reelcipe.idempotency;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.idempotency.domain.IdempotencyRepository;
 import com.reelcipe.idempotency.domain.IdempotencyRequest;
 import com.reelcipe.idempotency.domain.IdempotencyResult;
@@ -25,7 +26,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class IdempotencyServiceTest {
 
-    private static final UUID USER_ID = UUID.randomUUID();
+    private static final UUID USER_ID = UuidV7.randomUuid();
 
     @Mock
     private IdempotencyRepository repository;
@@ -89,7 +90,7 @@ class IdempotencyServiceTest {
 
     private IdempotencyRequest request(String body, IdempotencyResult result) {
         return new IdempotencyRequest(
-                UUID.randomUUID(), USER_ID, "recipe.create", "recipe", "key-1",
+                UuidV7.randomUuid(), USER_ID, "recipe.create", "recipe", "key-1",
                 service.canonicalBodyHash(body),
                 result == null ? null : result.status(),
                 result == null ? null : result.body(),

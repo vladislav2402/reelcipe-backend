@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserStatus;
 import com.reelcipe.billing.QuotaService;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.idempotency.IdempotencyService;
 import com.reelcipe.idempotency.domain.IdempotencyResult;
 import com.reelcipe.imports.domain.*;
@@ -161,7 +162,7 @@ public class ImportService {
         Instant now = clock.instant();
         boolean upload = command.sourceType() == ImportSourceType.UPLOAD;
         ImportJob job = new ImportJob(
-                UUID.randomUUID(), userId, command.clientRequestId(), command.sourceType(), command.sourceUrl(),
+                UuidV7.randomUuid(), userId, command.clientRequestId(), command.sourceType(), command.sourceUrl(),
                 command.mediaKind(), command.fileName(), command.contentType(), command.sizeBytes(),
                 command.descriptionText(), requestHash,
                 upload ? ImportStatus.AWAITING_UPLOAD : ImportStatus.QUEUED,

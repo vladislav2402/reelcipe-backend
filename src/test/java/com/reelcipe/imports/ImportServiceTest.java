@@ -6,6 +6,7 @@ import com.reelcipe.auth.domain.User;
 import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserStatus;
 import com.reelcipe.billing.QuotaService;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.idempotency.IdempotencyService;
 import com.reelcipe.imports.domain.ImportJob;
 import com.reelcipe.imports.domain.ImportJobRepository;
@@ -36,7 +37,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class ImportServiceTest {
-    private static final UUID USER_ID = UUID.randomUUID();
+    private static final UUID USER_ID = UuidV7.randomUuid();
     private static final Instant NOW = Instant.parse("2026-09-14T12:00:00Z");
 
     @Mock
@@ -94,7 +95,7 @@ class ImportServiceTest {
     @Test
     void createsQueuedLinkAndReturnsQuota() {
         ImportService.ImportCommand command = new ImportService.ImportCommand(
-                UUID.randomUUID(), ImportSourceType.LINK, "https://example.com/video",
+                UuidV7.randomUuid(), ImportSourceType.LINK, "https://example.com/video",
                 null, null, null, null, "Dinner");
 
         ImportService.ImportView result = service.create(USER_ID, "key", command);
@@ -107,7 +108,7 @@ class ImportServiceTest {
     @Test
     void rejectsUploadWithoutRequiredMetadata() {
         ImportService.ImportCommand command = new ImportService.ImportCommand(
-                UUID.randomUUID(), ImportSourceType.UPLOAD, null,
+                UuidV7.randomUuid(), ImportSourceType.UPLOAD, null,
                 null, "video.mp4", "video/mp4", 100L, null);
 
         assertThatThrownBy(() -> service.create(USER_ID, "key", command))

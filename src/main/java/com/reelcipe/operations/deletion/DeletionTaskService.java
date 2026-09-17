@@ -1,5 +1,6 @@
 package com.reelcipe.operations.deletion;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.operations.deletion.domain.DeletionTask;
 import com.reelcipe.operations.deletion.domain.DeletionTaskRepository;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class DeletionTaskService {
         if (existing != null) {
             return existing;
         }
-        UUID id = UUID.randomUUID();
+        UUID id = UuidV7.randomUuid();
         repository.insertIfAbsent(
                 id,
                 userId,

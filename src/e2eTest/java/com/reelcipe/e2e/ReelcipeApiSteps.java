@@ -2,6 +2,7 @@ package com.reelcipe.e2e;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.reelcipe.common.UuidV7;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
@@ -86,7 +87,7 @@ public class ReelcipeApiSteps {
                     recipeClient.deleteRecipe(
                             createdRecipeId,
                             recipeBody.get("version").asText(),
-                            UUID.randomUUID().toString());
+                            UuidV7.randomUuid().toString());
                 }
             }
 
@@ -100,7 +101,7 @@ public class ReelcipeApiSteps {
                         shoppingClient.deleteItem(
                                 item.get("id").asText(),
                                 item.get("version").asText(),
-                                UUID.randomUUID().toString());
+                                UuidV7.randomUuid().toString());
                     }
                 }
             }
@@ -113,7 +114,7 @@ public class ReelcipeApiSteps {
 
     @Given("I am authenticated as {string}")
     public void authenticate(String fixture) {
-        String randomUsername = "e2e-" + fixture + "-" + UUID.randomUUID();
+        String randomUsername = "e2e-" + fixture + "-" + UuidV7.randomUuid();
         AuthClient.Response authResponse = authClient.devLogin(randomUsername);
         Response response = new Response(authResponse.status(), authResponse.body(), null);
         assertThat(response.status()).isEqualTo(200);
@@ -128,7 +129,7 @@ public class ReelcipeApiSteps {
 
     @When("I create a recipe with:")
     public void createRecipe(DataTable dataTable) {
-        idempotencyKey = UUID.randomUUID().toString();
+        idempotencyKey = UuidV7.randomUuid().toString();
         List<Map<String, String>> rows = dataTable.asMaps(String.class, String.class);
         assertThat(rows).hasSizeGreaterThanOrEqualTo(3);
 
@@ -163,7 +164,7 @@ public class ReelcipeApiSteps {
         RecipeClient.RecipePayload recipe = new RecipeClient.RecipePayload(
                 title, "EN", new RecipeClient.IngredientPayload[0], new RecipeClient.StepPayload[0]);
         RecipeClient.Response response = recipeClient.updateRecipe(
-                recipeId, recipeVersion, recipe, UUID.randomUUID().toString());
+                recipeId, recipeVersion, recipe, UuidV7.randomUuid().toString());
         lastResponse = new Response(response.status(), response.body(), response.etag());
         assertThat(lastResponse.status()).isEqualTo(200);
         recipeVersion = json(lastResponse.body()).get("version").asText();
@@ -188,7 +189,7 @@ public class ReelcipeApiSteps {
     @When("I delete the recipe")
     public void deleteRecipe() {
         RecipeClient.Response response = recipeClient.deleteRecipe(
-                recipeId, recipeVersion, UUID.randomUUID().toString());
+                recipeId, recipeVersion, UuidV7.randomUuid().toString());
         lastResponse = new Response(response.status(), response.body(), response.etag());
         assertThat(lastResponse.status()).isEqualTo(204);
     }
@@ -207,9 +208,9 @@ public class ReelcipeApiSteps {
 
     @When("I add the recipe to the shopping list with the same idempotency key twice")
     public void addRecipeTwice() {
-        idempotencyKey = UUID.randomUUID().toString();
+        idempotencyKey = UuidV7.randomUuid().toString();
         ShoppingClient.RecipeAdditionPayload addition = new ShoppingClient.RecipeAdditionPayload(
-                recipeId, 1, UUID.randomUUID());
+                recipeId, 1, UuidV7.randomUuid());
         ShoppingClient.Response firstResponse = shoppingClient.addRecipe(addition, idempotencyKey);
         ShoppingClient.Response secondResponse = shoppingClient.addRecipe(addition, idempotencyKey);
         Response first = new Response(firstResponse.status(), firstResponse.body(), firstResponse.etag());
@@ -280,8 +281,8 @@ public class ReelcipeApiSteps {
 
     @When("I create the same link import twice")
     public void createLinkImportTwice() {
-        UUID clientRequestId = UUID.randomUUID();
-        idempotencyKey = UUID.randomUUID().toString();
+        UUID clientRequestId = UuidV7.randomUuid();
+        idempotencyKey = UuidV7.randomUuid().toString();
         ImportClient.Response first = importClient.createLink(
                 clientRequestId, "https://example.com/e2e-video", idempotencyKey);
         ImportClient.Response second = importClient.createLink(
@@ -298,11 +299,11 @@ public class ReelcipeApiSteps {
     public void createUploadImport() {
         long sizeBytes = 12;
         ImportClient.Response response = importClient.createUpload(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 "e2e-video.mp4",
                 "video/mp4",
                 sizeBytes,
-                UUID.randomUUID().toString());
+                UuidV7.randomUuid().toString());
         lastResponse = new Response(response.status(), response.body(), null);
         assertThat(lastResponse.status()).isEqualTo(202);
         JsonNode body = json(lastResponse.body());
@@ -339,12 +340,12 @@ public class ReelcipeApiSteps {
     public void createB23VideoImport() {
         videoFixture = createB23VideoFixture();
         ImportClient.Response response = importClient.createUpload(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 "VIDEO",
                 "b23-e2e.mp4",
                 "video/mp4",
                 videoFixture.length,
-                UUID.randomUUID().toString(),
+                UuidV7.randomUuid().toString(),
                 "Add pasta to boiling water and season with salt.");
         lastResponse = new Response(response.status(), response.body(), null);
         assertThat(lastResponse.status()).isEqualTo(202);
@@ -419,7 +420,7 @@ public class ReelcipeApiSteps {
         recipeId = body.get("recipeId").asText();
         RecipeClient.Response saveResponse = recipeClient.saveRecipe(
                 recipeId,
-                UUID.randomUUID().toString());
+                UuidV7.randomUuid().toString());
         lastResponse = new Response(saveResponse.status(), saveResponse.body(), saveResponse.etag());
         assertThat(lastResponse.status()).isEqualTo(200);
         assertThat(json(lastResponse.body()).get("libraryState").asText()).isEqualTo("SAVED");
@@ -430,8 +431,8 @@ public class ReelcipeApiSteps {
                 new ShoppingClient.RecipeAdditionPayload(
                         recipeId,
                         Long.parseLong(recipeVersion),
-                        UUID.randomUUID()),
-                UUID.randomUUID().toString());
+                        UuidV7.randomUuid()),
+                UuidV7.randomUuid().toString());
         assertThat(shoppingResponse.status()).isEqualTo(201);
         assertThat(json(shoppingResponse.body()).at("/items").toString())
                 .contains("pasta");

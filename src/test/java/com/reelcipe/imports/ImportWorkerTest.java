@@ -1,5 +1,6 @@
 package com.reelcipe.imports;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.ImportLease;
 import com.reelcipe.imports.domain.ImportStage;
 import org.junit.jupiter.api.Test;
@@ -31,10 +32,10 @@ class ImportWorkerTest {
 
     @Test
     void handlerRunsOnExecutorAndHeartbeatCanFenceIt() throws Exception {
-        UUID importId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
         ImportLease lease = new ImportLease(
                 importId,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 "worker-a",
                 1,
                 1,

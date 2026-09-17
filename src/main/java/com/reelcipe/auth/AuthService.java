@@ -1,6 +1,7 @@
 package com.reelcipe.auth;
 
 import com.reelcipe.auth.domain.*;
+import com.reelcipe.common.UuidV7;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,7 @@ public class AuthService {
     }
 
     private UUID createDevUser(String username) {
-        UUID userId = UUID.randomUUID();
+        UUID userId = UuidV7.randomUuid();
         Instant now = Instant.now();
         users.save(new User(userId, username, UserStatus.ACTIVE, now, now));
         return userId;
@@ -93,7 +94,7 @@ public class AuthService {
 
     private TokenPair createSession(UUID userId) {
         Instant now = Instant.now();
-        return createSession(userId, UUID.randomUUID(), now);
+        return createSession(userId, UuidV7.randomUuid(), now);
     }
 
     private TokenPair createSession(UUID userId, UUID familyId, Instant now) {

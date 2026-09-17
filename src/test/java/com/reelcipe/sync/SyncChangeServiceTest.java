@@ -1,5 +1,6 @@
 package com.reelcipe.sync;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.sync.domain.SyncChange;
 import com.reelcipe.sync.domain.SyncChangeRepository;
 import com.reelcipe.sync.domain.UserSyncState;
@@ -37,8 +38,8 @@ class SyncChangeServiceTest {
 
     @Test
     void recordAllocatesSequenceBeforeAppendingChange() {
-        UUID userId = UUID.randomUUID();
-        UUID recipeId = UUID.randomUUID();
+        UUID userId = UuidV7.randomUuid();
+        UUID recipeId = UuidV7.randomUuid();
         when(stateRepository.findLocked(userId)).thenReturn(java.util.Optional.of(new UserSyncState(userId)));
 
         SyncChange result = service.record(userId, "recipe", recipeId, "UPDATE", 3);
@@ -51,12 +52,12 @@ class SyncChangeServiceTest {
     @Test
     void recordRejectsInvalidVersion() {
         assertThrows(ResponseStatusException.class,
-                () -> service.record(UUID.randomUUID(), "recipe", UUID.randomUUID(), "UPDATE", 0));
+                () -> service.record(UuidV7.randomUuid(), "recipe", UuidV7.randomUuid(), "UPDATE", 0));
     }
 
     @Test
     void watermarkDelegatesToRepository() {
-        UUID userId = UUID.randomUUID();
+        UUID userId = UuidV7.randomUuid();
         when(stateRepository.findById(userId)).thenReturn(java.util.Optional.empty());
 
         assertEquals(0L, service.captureWatermark(userId));

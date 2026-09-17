@@ -3,6 +3,7 @@ package com.reelcipe.imports.recipe;
 import com.reelcipe.auth.domain.User;
 import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserStatus;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.imports.recipe.domain.RecipeCandidate;
 import com.reelcipe.imports.recipe.domain.RecipeCandidateRepository;
@@ -41,14 +42,14 @@ class RecipeCandidateRepositoryIntegrationTest {
 
     @Test
     void persistsImmutableCandidateAndFindsItByInputHash() {
-        UUID userId = UUID.randomUUID();
-        UUID importId = UUID.randomUUID();
+        UUID userId = UuidV7.randomUuid();
+        UUID importId = UuidV7.randomUuid();
         Instant now = Instant.now();
         users.saveAndFlush(new User(userId, "Candidate test", UserStatus.ACTIVE, now, now));
         jobs.saveAndFlush(new ImportJob(
                 importId,
                 userId,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 ImportSourceType.LINK,
                 "https://example.test/recipe",
                 null,
@@ -63,7 +64,7 @@ class RecipeCandidateRepositoryIntegrationTest {
                 null,
                 now));
         RecipeCandidate candidate = candidates.saveAndFlush(new RecipeCandidate(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 importId,
                 userId,
                 "recipe-input-hash",

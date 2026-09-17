@@ -1,6 +1,7 @@
 package com.reelcipe.billing;
 
 import com.reelcipe.billing.domain.*;
+import com.reelcipe.common.UuidV7;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,10 +110,10 @@ public class QuotaService {
         period.reserve(1, now);
         periods.save(period);
         QuotaReservation reservation = new QuotaReservation(
-                UUID.randomUUID(), userId, importId, periodStart, generation, 1, now);
+                UuidV7.randomUuid(), userId, importId, periodStart, generation, 1, now);
         reservations.save(reservation);
         ledger.save(new UsageLedger(
-                UUID.randomUUID(), userId, importId, reservation.getId(), periodStart,
+                UuidV7.randomUuid(), userId, importId, reservation.getId(), periodStart,
                 UsageOperation.RESERVE, 1, now));
         return reservation;
     }
@@ -145,14 +146,14 @@ public class QuotaService {
         periods.save(period);
         reservations.save(reservation);
         ledger.save(new UsageLedger(
-                UUID.randomUUID(), userId, reservation.getImportId(), reservation.getId(),
+                UuidV7.randomUuid(), userId, reservation.getImportId(), reservation.getId(),
                 reservation.getPeriodStart(), consume ? UsageOperation.CONSUME : UsageOperation.RELEASE,
                 reservation.getUnits(), now));
         return reservation;
     }
 
     private UsagePeriod lockedPeriod(UUID userId, LocalDate periodStart, QuotaPlan plan) {
-        periods.ensureExists(UUID.randomUUID(), userId, periodStart, plan.monthlyLimit());
+        periods.ensureExists(UuidV7.randomUuid(), userId, periodStart, plan.monthlyLimit());
         UsagePeriod period = periods.findLocked(userId, periodStart).orElseThrow();
         period.applyPlanLimit(plan.monthlyLimit(), clock.instant());
         return period;

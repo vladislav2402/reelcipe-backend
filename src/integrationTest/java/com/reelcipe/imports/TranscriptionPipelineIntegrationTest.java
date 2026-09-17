@@ -3,6 +3,7 @@ package com.reelcipe.imports;
 import com.reelcipe.auth.domain.User;
 import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserStatus;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.audio.AudioExtractor;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.imports.transcription.MockSpeechTranscriber;
@@ -81,12 +82,12 @@ class TranscriptionPipelineIntegrationTest {
     @Test
     void transcribesKnownFixtureAndPersistsCheckpoint() {
         UUID userId = createUser();
-        UUID importId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
         Instant now = Instant.now();
         ImportJob job = new ImportJob(
                 importId,
                 userId,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 ImportSourceType.UPLOAD,
                 null,
                 ImportMediaKind.AUDIO,
@@ -102,7 +103,7 @@ class TranscriptionPipelineIntegrationTest {
                 now);
         jobs.saveAndFlush(job);
 
-        UUID audioAssetId = UUID.randomUUID();
+        UUID audioAssetId = UuidV7.randomUuid();
         String audioKey = "processing/" + importId + "/audio.flac";
         assets.saveAndFlush(MediaAsset.normalizedAudio(
                 audioAssetId,
@@ -139,7 +140,7 @@ class TranscriptionPipelineIntegrationTest {
     }
 
     private UUID createUser() {
-        UUID id = UUID.randomUUID();
+        UUID id = UuidV7.randomUuid();
         Instant now = Instant.now();
         users.saveAndFlush(new User(id, "ASR integration test", UserStatus.ACTIVE, now, now));
         return id;

@@ -1,22 +1,22 @@
 package com.reelcipe.imports.recipe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.AudioOutcome;
 import com.reelcipe.imports.transcription.domain.SpeechStatus;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RecipeCandidateValidatorTest {
     private final RecipeTextSnapshot snapshot = new RecipeTextSnapshot(
-            UUID.randomUUID(),
+            UuidV7.randomUuid(),
             1,
             "hash",
             List.of(new RecipeTextSnapshot.TranscriptSegment(
-                    UUID.randomUUID(), 0, 0, 1000, "Boil pasta.")),
+                    UuidV7.randomUuid(), 0, 0, 1000, "Boil pasta.")),
             null,
             null,
             AudioOutcome.AUDIO_READY,

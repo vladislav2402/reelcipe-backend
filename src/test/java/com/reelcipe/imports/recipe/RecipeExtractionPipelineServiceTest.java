@@ -1,6 +1,7 @@
 package com.reelcipe.imports.recipe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.ImportLeaseControl;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.imports.recipe.domain.RecipeCandidateRepository;
@@ -21,7 +22,7 @@ class RecipeExtractionPipelineServiceTest {
 
     @Test
     void performsOnlyOneBoundedCorrectiveRetryAndKeepsSameSnapshot() {
-        UUID importId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
         ImportJob job = job(importId, "Boil pasta.");
         ImportLease lease = lease(importId);
         ImportJobRepository jobs = mock(ImportJobRepository.class);
@@ -42,7 +43,7 @@ class RecipeExtractionPipelineServiceTest {
                 eq(importId), any())).thenReturn(Optional.empty());
         when(checkpoints.start(any(), any())).thenReturn(
                 new RecipeExtractionCheckpointPersistence.StartedAttempt(
-                        UUID.randomUUID(), "mock", "mock-v1"));
+                        UuidV7.randomUuid(), "mock", "mock-v1"));
 
         RecipeExtractionPipelineService service = new RecipeExtractionPipelineService(
                 jobs,
@@ -70,8 +71,8 @@ class RecipeExtractionPipelineServiceTest {
     private ImportJob job(UUID importId, String description) {
         return new ImportJob(
                 importId,
-                UUID.randomUUID(),
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
+                UuidV7.randomUuid(),
                 ImportSourceType.LINK,
                 "https://example.test/recipe",
                 ImportMediaKind.AUDIO,
@@ -90,7 +91,7 @@ class RecipeExtractionPipelineServiceTest {
     private ImportLease lease(UUID importId) {
         return new ImportLease(
                 importId,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 "worker-1",
                 1,
                 1,

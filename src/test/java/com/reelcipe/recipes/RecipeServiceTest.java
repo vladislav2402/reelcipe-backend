@@ -1,6 +1,7 @@
 package com.reelcipe.recipes;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.idempotency.IdempotencyService;
 import com.reelcipe.recipes.domain.*;
 import com.reelcipe.sync.SyncChangeService;
@@ -41,8 +42,8 @@ class RecipeServiceTest {
     @Test
     void patchRejectsStaleIfMatchVersion() {
         RecipeService service = new RecipeService(recipes, ingredients, steps, revisions, idempotency, sync, new ObjectMapper());
-        UUID userId = UUID.randomUUID();
-        UUID recipeId = UUID.randomUUID();
+        UUID userId = UuidV7.randomUuid();
+        UUID recipeId = UuidV7.randomUuid();
         Recipe recipe = new Recipe(recipeId, userId, "Old", RecipeLanguage.EN, null,
                 RecipeAnalysisMode.MANUAL, RecipeLibraryState.SAVED, Instant.now());
         when(recipes.findForUpdate(recipeId, userId)).thenReturn(Optional.of(recipe));
@@ -57,8 +58,8 @@ class RecipeServiceTest {
     void listRejectsCursorWithDifferentSearch() {
         RecipeService service = new RecipeService(recipes, ingredients, steps, revisions, idempotency, sync,
                 new ObjectMapper());
-        UUID userId = UUID.randomUUID();
-        Recipe recipe = new Recipe(UUID.randomUUID(), userId, "Pasta", RecipeLanguage.EN, null,
+        UUID userId = UuidV7.randomUuid();
+        Recipe recipe = new Recipe(UuidV7.randomUuid(), userId, "Pasta", RecipeLanguage.EN, null,
                 RecipeAnalysisMode.MANUAL, RecipeLibraryState.SAVED, Instant.now());
         when(recipes.findLibrary(any(), any(), any(), any(Pageable.class)))
                 .thenReturn(List.of(recipe, recipe));
@@ -76,7 +77,7 @@ class RecipeServiceTest {
         RecipeService service = new RecipeService(recipes, ingredients, steps, revisions, idempotency, sync,
                 new ObjectMapper());
 
-        assertThrows(ResponseStatusException.class, () -> service.list(UUID.randomUUID(), null, 101, null));
+        assertThrows(ResponseStatusException.class, () -> service.list(UuidV7.randomUuid(), null, 101, null));
     }
 
     @Test
@@ -89,8 +90,8 @@ class RecipeServiceTest {
                 idempotency,
                 sync,
                 new ObjectMapper().findAndRegisterModules());
-        UUID userId = UUID.randomUUID();
-        UUID recipeId = UUID.randomUUID();
+        UUID userId = UuidV7.randomUuid();
+        UUID recipeId = UuidV7.randomUuid();
         Recipe recipe = new Recipe(
                 recipeId,
                 userId,

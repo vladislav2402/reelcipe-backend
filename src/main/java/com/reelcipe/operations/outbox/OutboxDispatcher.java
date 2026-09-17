@@ -2,6 +2,7 @@ package com.reelcipe.operations.outbox;
 
 import com.reelcipe.operations.outbox.domain.OperationOutbox;
 import com.reelcipe.operations.outbox.domain.OutboxLeaseLostException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,7 +23,7 @@ public class OutboxDispatcher {
     public OutboxDispatcher(
             OutboxLeaseService leases,
             List<OutboxConsumer> consumers,
-            @Value("${app.instance-id}") String workerId,
+            @Qualifier("instanceId") String workerId,
             @Value("${app.worker.operations-batch-size:20}") int batchSize) {
         this.leases = leases;
         this.consumers = consumers;

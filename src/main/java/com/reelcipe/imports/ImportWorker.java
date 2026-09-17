@@ -5,6 +5,7 @@ import com.reelcipe.imports.domain.ImportLease;
 import com.reelcipe.providers.ProviderAdmissionException;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -36,7 +37,7 @@ public class ImportWorker {
             ImportLeasePersistence persistence,
             ImportRetryService retryService,
             ObjectProvider<ImportStageHandler> handlers,
-            @Value("${app.instance-id}") String workerId,
+            @Qualifier("instanceId") String workerId,
             @Value("${app.worker.execution-slots:2}") int executionSlots) {
         this.queue = queue;
         this.persistence = persistence;

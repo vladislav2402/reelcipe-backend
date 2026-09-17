@@ -4,6 +4,7 @@ import com.reelcipe.auth.domain.AuthRepository;
 import com.reelcipe.auth.domain.AuthenticatedUser;
 import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserSession;
+import com.reelcipe.common.UuidV7;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,9 +26,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
-    private static final UUID USER_ID = UUID.randomUUID();
-    private static final UUID SESSION_ID = UUID.randomUUID();
-    private static final UUID FAMILY_ID = UUID.randomUUID();
+    private static final UUID USER_ID = UuidV7.randomUuid();
+    private static final UUID SESSION_ID = UuidV7.randomUuid();
+    private static final UUID FAMILY_ID = UuidV7.randomUuid();
 
     @Mock
     private AuthRepository authRepository;

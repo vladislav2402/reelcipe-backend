@@ -1,5 +1,6 @@
 package com.reelcipe.imports.recipe;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.AudioOutcome;
 import com.reelcipe.imports.transcription.domain.SpeechStatus;
 import org.junit.jupiter.api.Test;
@@ -10,8 +11,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RecipeTextSnapshotTest {
-    private static final UUID TRANSCRIPTION_ID = UUID.randomUUID();
-    private static final UUID SEGMENT_ID = UUID.randomUUID();
+    private static final UUID TRANSCRIPTION_ID = UuidV7.randomUuid();
+    private static final UUID SEGMENT_ID = UuidV7.randomUuid();
 
     @Test
     void unchangedInputHasStableHash() {

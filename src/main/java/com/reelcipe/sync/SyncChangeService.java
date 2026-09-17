@@ -1,5 +1,6 @@
 package com.reelcipe.sync;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.sync.domain.SyncChange;
 import com.reelcipe.sync.domain.SyncChangeRepository;
 import com.reelcipe.sync.domain.UserSyncState;
@@ -36,7 +37,7 @@ public class SyncChangeService {
         long sequence = state.increment();
         stateRepository.save(state);
         SyncChange change = new SyncChange(
-                UUID.randomUUID(), userId, entityType, entityId, operation, version, sequence, Instant.now());
+                UuidV7.randomUuid(), userId, entityType, entityId, operation, version, sequence, Instant.now());
         repository.save(change);
         return change;
     }

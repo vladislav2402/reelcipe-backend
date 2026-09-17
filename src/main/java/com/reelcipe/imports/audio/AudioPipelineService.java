@@ -1,5 +1,6 @@
 package com.reelcipe.imports.audio;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.AudioCheckpointPersistence;
 import com.reelcipe.imports.ImportLeaseControl;
 import com.reelcipe.imports.ImportProcessingException;
@@ -87,7 +88,7 @@ public class AudioPipelineService {
                 throw permanent("AUDIO_SIZE_LIMIT_EXCEEDED");
             }
             String sha256 = sha256(output);
-            UUID audioAssetId = UUID.randomUUID();
+            UUID audioAssetId = UuidV7.randomUuid();
             String processingKey = audioKey(lease, audioAssetId);
             upload(processingKey, output, sizeBytes);
             checkpoints.checkpoint(

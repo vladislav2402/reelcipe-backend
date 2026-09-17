@@ -22,7 +22,7 @@ server:
 
 app:
   role: ${APP_ROLE:api}
-  instance-id: ${APP_INSTANCE_ID:${random.uuid}}
+  instance-id: ${APP_INSTANCE_ID:}
   worker:
     enabled: ${APP_WORKER_ENABLED:true}
     execution-slots: ${APP_WORKER_EXECUTION_SLOTS:2}

@@ -3,6 +3,7 @@ package com.reelcipe.auth;
 import com.reelcipe.auth.domain.AuthenticatedUser;
 import com.reelcipe.auth.domain.UserProfile;
 import com.reelcipe.auth.domain.UserStatus;
+import com.reelcipe.common.UuidV7;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -10,7 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -42,7 +42,7 @@ class AuthControllerTest {
     @Test
     void meReturnsProfile() {
         AuthController controller = new AuthController(authService, tokenService);
-        AuthenticatedUser user = new AuthenticatedUser(UUID.randomUUID(), UUID.randomUUID());
+        AuthenticatedUser user = new AuthenticatedUser(UuidV7.randomUuid(), UuidV7.randomUuid());
         UserProfile profile = new UserProfile(user.userId(), "Alice", UserStatus.ACTIVE, Instant.now());
         when(authService.profile(user)).thenReturn(profile);
 

@@ -1,6 +1,7 @@
 package com.reelcipe.billing;
 
 import com.reelcipe.billing.domain.*;
+import com.reelcipe.common.UuidV7;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -33,10 +34,10 @@ class QuotaServiceTest {
                 ledger,
                 entitlements,
                 Clock.fixed(now, ZoneOffset.UTC));
-        UUID userId = UUID.randomUUID();
-        UUID importId = UUID.randomUUID();
+        UUID userId = UuidV7.randomUuid();
+        UUID importId = UuidV7.randomUuid();
         UsagePeriod period = new UsagePeriod(
-                UUID.randomUUID(), userId, java.time.LocalDate.of(2026, 9, 1), 10, now);
+                UuidV7.randomUuid(), userId, java.time.LocalDate.of(2026, 9, 1), 10, now);
         when(entitlements.currentPlan(userId)).thenReturn(QuotaPlan.FREE);
         when(periods.findLocked(userId, period.getPeriodStart())).thenReturn(Optional.of(period));
         when(reservations.findTopByImportIdOrderByGenerationDesc(importId)).thenReturn(Optional.empty());
@@ -58,9 +59,9 @@ class QuotaServiceTest {
                 ledger,
                 entitlements,
                 Clock.fixed(now, ZoneOffset.UTC));
-        UUID userId = UUID.randomUUID();
+        UUID userId = UuidV7.randomUuid();
         UsagePeriod period = new UsagePeriod(
-                UUID.randomUUID(), userId, java.time.LocalDate.of(2026, 9, 1), 100, now);
+                UuidV7.randomUuid(), userId, java.time.LocalDate.of(2026, 9, 1), 100, now);
         when(entitlements.currentPlan(userId)).thenReturn(QuotaPlan.PRO);
         when(periods.findLocked(userId, period.getPeriodStart())).thenReturn(Optional.of(period));
 

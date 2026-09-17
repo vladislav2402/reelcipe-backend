@@ -1,5 +1,6 @@
 package com.reelcipe.imports;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.storage.ObjectStorage;
 import org.junit.jupiter.api.Test;
@@ -23,13 +24,13 @@ class LocalFixtureResolverTest {
     void resolvesFixtureLinkWithoutNetworkAccess(@TempDir Path fixtureDirectory) throws Exception {
         byte[] content = "fixture-content".getBytes(java.nio.charset.StandardCharsets.UTF_8);
         Files.write(fixtureDirectory.resolve("recipe.mp4"), content);
-        UUID importId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
+        UUID userId = UuidV7.randomUuid();
         Instant now = Instant.parse("2026-09-16T00:00:00Z");
         ImportJob job = new ImportJob(
                 importId,
                 userId,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 ImportSourceType.LINK,
                 "fixture://recipe.mp4",
                 ImportMediaKind.VIDEO,
@@ -79,13 +80,13 @@ class LocalFixtureResolverTest {
 
     @Test
     void ignoresNonFixtureLinkAndLeavesStageUntouched() {
-        UUID importId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
+        UUID userId = UuidV7.randomUuid();
         Instant now = Instant.parse("2026-09-16T00:00:00Z");
         ImportJob job = new ImportJob(
                 importId,
                 userId,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 ImportSourceType.LINK,
                 "https://example.com/recipe",
                 null,

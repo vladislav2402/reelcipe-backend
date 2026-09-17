@@ -3,6 +3,7 @@ package com.reelcipe.imports;
 import com.reelcipe.auth.domain.User;
 import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserStatus;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.storage.InMemoryObjectStorage;
 import org.junit.jupiter.api.Test;
@@ -132,9 +133,9 @@ class ProcessingCopyIntegrationTest {
     private ImportService.ImportView createUpload(UUID userId, long sizeBytes) {
         return imports.create(
                 userId,
-                "copy-" + UUID.randomUUID(),
+                "copy-" + UuidV7.randomUuid(),
                 new ImportService.ImportCommand(
-                        UUID.randomUUID(),
+                        UuidV7.randomUuid(),
                         ImportSourceType.UPLOAD,
                         null,
                         ImportMediaKind.VIDEO,
@@ -149,7 +150,7 @@ class ProcessingCopyIntegrationTest {
     }
 
     private UUID createUser() {
-        UUID id = UUID.randomUUID();
+        UUID id = UuidV7.randomUuid();
         Instant now = Instant.now();
         users.saveAndFlush(new User(id, "Processing copy test", UserStatus.ACTIVE, now, now));
         return id;

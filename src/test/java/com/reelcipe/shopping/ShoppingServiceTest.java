@@ -1,6 +1,7 @@
 package com.reelcipe.shopping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.idempotency.IdempotencyService;
 import com.reelcipe.recipes.domain.RecipeIngredientRepository;
 import com.reelcipe.recipes.domain.RecipeRepository;
@@ -41,9 +42,9 @@ class ShoppingServiceTest {
     void patchRejectsStaleIfMatchVersion() {
         ShoppingService service = new ShoppingService(
                 lists, items, sources, recipes, ingredients, idempotency, sync, new ObjectMapper());
-        UUID userId = UUID.randomUUID();
-        UUID listId = UUID.randomUUID();
-        UUID itemId = UUID.randomUUID();
+        UUID userId = UuidV7.randomUuid();
+        UUID listId = UuidV7.randomUuid();
+        UUID itemId = UuidV7.randomUuid();
         ShoppingList list = new ShoppingList(listId, userId, Instant.now());
         ShoppingItem item = new ShoppingItem(itemId, listId, "Flour", null, "g", Instant.now());
         when(lists.findLockedByUserId(userId)).thenReturn(Optional.of(list));

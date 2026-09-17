@@ -1,5 +1,6 @@
 package com.reelcipe.operations.outbox;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.operations.outbox.domain.OperationOutbox;
 import com.reelcipe.operations.outbox.domain.OperationOutboxRepository;
 import org.springframework.stereotype.Service;
@@ -31,7 +32,7 @@ public class OutboxService {
         if (existing != null) {
             return existing;
         }
-        UUID id = UUID.randomUUID();
+        UUID id = UuidV7.randomUuid();
         repository.insertIfAbsent(
                 id,
                 eventType,

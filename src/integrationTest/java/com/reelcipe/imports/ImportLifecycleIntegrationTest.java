@@ -4,6 +4,7 @@ import com.reelcipe.auth.domain.User;
 import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserStatus;
 import com.reelcipe.billing.QuotaService;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -133,9 +134,9 @@ class ImportLifecycleIntegrationTest {
         Instant now = Instant.now();
         UUID userId = createUser();
         ImportJob job = new ImportJob(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 userId,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 ImportSourceType.LINK,
                 "https://example.com/expired",
                 "expired-hash",
@@ -160,11 +161,11 @@ class ImportLifecycleIntegrationTest {
         currentUser = createUser();
         return imports.create(
                 currentUser,
-                UUID.randomUUID().toString(),
+                UuidV7.randomUuid().toString(),
                 new ImportService.ImportCommand(
-                        UUID.randomUUID(),
+                        UuidV7.randomUuid(),
                         ImportSourceType.LINK,
-                        "https://example.com/b15/" + UUID.randomUUID(),
+                        "https://example.com/b15/" + UuidV7.randomUuid(),
                         null,
                         null,
                         null,
@@ -184,7 +185,7 @@ class ImportLifecycleIntegrationTest {
     }
 
     private UUID createUser() {
-        UUID userId = UUID.randomUUID();
+        UUID userId = UuidV7.randomUuid();
         Instant now = Instant.now();
         users.saveAndFlush(new User(userId, "B15 test", UserStatus.ACTIVE, now, now));
         return userId;

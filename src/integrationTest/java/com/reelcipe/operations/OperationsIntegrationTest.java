@@ -1,5 +1,6 @@
 package com.reelcipe.operations;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.operations.deletion.DeletionDispatcher;
 import com.reelcipe.operations.deletion.DeletionHandler;
 import com.reelcipe.operations.deletion.DeletionLeaseService;
@@ -83,8 +84,8 @@ class OperationsIntegrationTest {
         UUID eventId = outbox.enqueue(
                 "TEST_EVENT",
                 "TEST",
-                UUID.randomUUID(),
-                "test-" + UUID.randomUUID(),
+                UuidV7.randomUuid(),
+                "test-" + UuidV7.randomUuid(),
                 "{\"value\":1}");
         AtomicInteger calls = new AtomicInteger();
         OutboxConsumer consumer = new TestConsumer("TEST_EVENT", calls, false);
@@ -106,8 +107,8 @@ class OperationsIntegrationTest {
         outbox.enqueue(
                 "CONCURRENT_EVENT",
                 "TEST",
-                UUID.randomUUID(),
-                "concurrent-" + UUID.randomUUID(),
+                UuidV7.randomUuid(),
+                "concurrent-" + UuidV7.randomUuid(),
                 "{}");
         AtomicInteger calls = new AtomicInteger();
         CountDownLatch handlerStarted = new CountDownLatch(1);
@@ -139,14 +140,14 @@ class OperationsIntegrationTest {
 
     @Test
     void rolledBackTransactionDoesNotPublishOutboxEvent() {
-        String deduplicationKey = "rollback-" + UUID.randomUUID();
+        String deduplicationKey = "rollback-" + UuidV7.randomUuid();
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
 
         assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
             outbox.enqueue(
                     "ROLLED_BACK_EVENT",
                     "TEST",
-                    UUID.randomUUID(),
+                    UuidV7.randomUuid(),
                     deduplicationKey,
                     "{}");
             throw new IllegalStateException("rollback");
@@ -161,8 +162,8 @@ class OperationsIntegrationTest {
         UUID eventId = outbox.enqueue(
                 "RETRY_EVENT",
                 "TEST",
-                UUID.randomUUID(),
-                "retry-" + UUID.randomUUID(),
+                UuidV7.randomUuid(),
+                "retry-" + UuidV7.randomUuid(),
                 "{}");
         OutboxConsumer consumer = new TestConsumer("RETRY_EVENT", new AtomicInteger(), true);
         OutboxDispatcher dispatcher = new OutboxDispatcher(
@@ -182,12 +183,12 @@ class OperationsIntegrationTest {
 
     @Test
     void deletionTaskKeepsResourceReferenceUntilHandlerCompletes() {
-        String resourceKey = "bucket/user/file-" + UUID.randomUUID();
+        String resourceKey = "bucket/user/file-" + UuidV7.randomUuid();
         UUID taskId = deletionTasks.enqueue(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 "OBJECT",
                 resourceKey,
-                "object-" + UUID.randomUUID());
+                "object-" + UuidV7.randomUuid());
         AtomicInteger calls = new AtomicInteger();
         DeletionHandler handler = new TestDeletionHandler(resourceKey, calls);
         DeletionDispatcher dispatcher = new DeletionDispatcher(

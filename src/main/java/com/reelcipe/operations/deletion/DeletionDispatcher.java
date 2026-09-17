@@ -2,6 +2,7 @@ package com.reelcipe.operations.deletion;
 
 import com.reelcipe.operations.deletion.domain.DeletionLeaseLostException;
 import com.reelcipe.operations.deletion.domain.DeletionTask;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,7 +23,7 @@ public class DeletionDispatcher {
     public DeletionDispatcher(
             DeletionLeaseService leases,
             List<DeletionHandler> handlers,
-            @Value("${app.instance-id}") String workerId,
+            @Qualifier("instanceId") String workerId,
             @Value("${app.worker.operations-batch-size:20}") int batchSize) {
         this.leases = leases;
         this.handlers = handlers;

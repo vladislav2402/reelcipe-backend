@@ -1,5 +1,6 @@
 package com.reelcipe.providers;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.providers.domain.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -60,7 +61,7 @@ public class ProviderAdmissionService {
         Instant now = clock.instant();
         Period period = period(now);
         budgets.createIfMissing(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 request.provider(),
                 period.start(),
                 period.end(),
@@ -84,7 +85,7 @@ public class ProviderAdmissionService {
                     now.plusSeconds(30));
         }
         ProviderAdmission admission = new ProviderAdmission(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 request.attemptId(),
                 request.importId(),
                 request.userId(),
@@ -171,7 +172,7 @@ public class ProviderAdmissionService {
     private void recordFailure(UUID userId, String provider, Instant now) {
         Instant windowStart = failureWindowStart(now);
         failures.createIfMissing(
-                UUID.randomUUID(), userId, provider, windowStart, now);
+                UuidV7.randomUuid(), userId, provider, windowStart, now);
         ProviderUserFailure failure = failures
                 .findByUserIdAndProviderAndWindowStart(userId, provider, windowStart)
                 .orElseThrow(() -> new IllegalStateException("Provider failure window was not created"));
@@ -194,7 +195,7 @@ public class ProviderAdmissionService {
     private ProviderBudgetPeriod lockBudget(String provider, Instant now) {
         Period period = period(now);
         budgets.createIfMissing(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 provider,
                 period.start(),
                 period.end(),

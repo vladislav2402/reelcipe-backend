@@ -3,6 +3,7 @@ package com.reelcipe.auth;
 import com.reelcipe.auth.domain.AuthRepository;
 import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserSession;
+import com.reelcipe.common.UuidV7;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,8 +41,8 @@ class AuthRepositoryIntegrationTest {
     @Test
     void repositoriesPersistAndReadSessionsAgainstPostgres() {
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
-        UUID sessionId = UUID.randomUUID();
-        UUID familyId = UUID.randomUUID();
+        UUID sessionId = UuidV7.randomUuid();
+        UUID familyId = UuidV7.randomUuid();
         UserSession session = new UserSession(
                 sessionId, userId, familyId, "refresh-hash", Instant.now().plusSeconds(3600), null);
 

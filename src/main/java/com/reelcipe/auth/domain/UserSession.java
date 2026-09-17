@@ -1,5 +1,6 @@
 package com.reelcipe.auth.domain;
 
+import com.reelcipe.common.UuidV7;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -43,7 +44,7 @@ public class UserSession {
     }
 
     public UserSession(UUID userId, UUID familyId, String refreshTokenHash, Instant expiresAt) {
-        this(UUID.randomUUID(), userId, familyId, refreshTokenHash, expiresAt, null);
+        this(UuidV7.randomUuid(), userId, familyId, refreshTokenHash, expiresAt, null);
     }
 
     public boolean isActive(Instant now) {

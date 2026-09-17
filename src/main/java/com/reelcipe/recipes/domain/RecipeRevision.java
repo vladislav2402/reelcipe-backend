@@ -1,5 +1,6 @@
 package com.reelcipe.recipes.domain;
 
+import com.reelcipe.common.UuidV7;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -28,7 +29,7 @@ public class RecipeRevision {
     }
 
     public RecipeRevision(UUID recipeId, long version, UUID editedBy, String snapshot, Instant createdAt) {
-        this.id = UUID.randomUUID();
+        this.id = UuidV7.randomUuid();
         this.recipeId = recipeId;
         this.version = version;
         this.editedBy = editedBy;

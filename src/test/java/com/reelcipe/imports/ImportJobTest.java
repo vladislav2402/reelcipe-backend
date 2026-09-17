@@ -1,5 +1,6 @@
 package com.reelcipe.imports;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.ImportJob;
 import com.reelcipe.imports.domain.ImportSourceType;
 import com.reelcipe.imports.domain.ImportStage;
@@ -9,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -82,9 +82,9 @@ class ImportJobTest {
     @Test
     void claimRejectsWaitingForUploadAndTerminalJobs() {
         ImportJob upload = new ImportJob(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
+                UuidV7.randomUuid(),
+                UuidV7.randomUuid(),
                 ImportSourceType.UPLOAD,
                 null,
                 null,
@@ -126,9 +126,9 @@ class ImportJobTest {
 
     private ImportJob job(ImportStatus status) {
         return new ImportJob(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
+                UuidV7.randomUuid(),
+                UuidV7.randomUuid(),
                 ImportSourceType.LINK,
                 "https://example.com/video",
                 "hash-v1",

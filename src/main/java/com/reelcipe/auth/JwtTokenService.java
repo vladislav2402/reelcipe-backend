@@ -7,6 +7,7 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.reelcipe.common.UuidV7;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +42,7 @@ public class JwtTokenService {
                 .claim("sid", sessionId.toString())
                 .issueTime(Date.from(now))
                 .expirationTime(Date.from(now.plusSeconds(accessTokenTtlSeconds)))
-                .jwtID(UUID.randomUUID().toString())
+                .jwtID(UuidV7.randomUuid().toString())
                 .build();
         try {
             SignedJWT token = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claims);

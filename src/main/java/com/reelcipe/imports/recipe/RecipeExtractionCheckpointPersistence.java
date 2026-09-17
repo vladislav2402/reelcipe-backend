@@ -1,5 +1,6 @@
 package com.reelcipe.imports.recipe;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.imports.recipe.domain.RecipeCandidate;
 import com.reelcipe.imports.recipe.domain.RecipeCandidateRepository;
@@ -51,7 +52,7 @@ public class RecipeExtractionCheckpointPersistence {
                         lease.importId(), AiAttemptKind.LLM)
                 .map(attempt -> attempt.getAttemptNumber() + 1)
                 .orElse(1);
-        UUID attemptId = UUID.randomUUID();
+        UUID attemptId = UuidV7.randomUuid();
         ProviderAdmissionService.Reservation reservation = admissions.reserve(
                 new ProviderAdmissionService.Request(
                         attemptId,
@@ -142,7 +143,7 @@ public class RecipeExtractionCheckpointPersistence {
             RecipeTextSnapshot snapshot,
             RecipeExtractor.Result result) {
         RecipeCandidate candidate = new RecipeCandidate(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 lease.importId(),
                 lease.userId(),
                 snapshot.inputHash(),

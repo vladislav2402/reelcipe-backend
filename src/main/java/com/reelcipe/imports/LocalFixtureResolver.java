@@ -1,5 +1,6 @@
 package com.reelcipe.imports;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.storage.ObjectStorage;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +15,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.util.HexFormat;
-import java.util.UUID;
 
 @Service
 @ConditionalOnProperty(name = "app.role", havingValue = "worker")
@@ -69,7 +69,7 @@ public class LocalFixtureResolver {
             MediaAsset source = assets.findLockedByImportIdAndAssetType(
                             lease.importId(), MediaAssetType.SOURCE)
                     .orElseGet(() -> new MediaAsset(
-                            UUID.randomUUID(),
+                            UuidV7.randomUuid(),
                             lease.importId(),
                             lease.userId(),
                             null,

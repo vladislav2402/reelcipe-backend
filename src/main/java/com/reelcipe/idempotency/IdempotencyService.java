@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.idempotency.domain.IdempotencyRepository;
 import com.reelcipe.idempotency.domain.IdempotencyRequest;
 import com.reelcipe.idempotency.domain.IdempotencyResult;
@@ -48,7 +49,7 @@ public class IdempotencyService {
         validate(userId, operation, target, idempotencyKey);
         Instant now = Instant.now();
         IdempotencyRequest candidate = new IdempotencyRequest(
-                UUID.randomUUID(), userId, operation, target, idempotencyKey,
+                UuidV7.randomUuid(), userId, operation, target, idempotencyKey,
                 canonicalBodyHash(requestBody), null, null, null, now.plus(retention), null);
         repository.upsertIfExpired(candidate.id(), candidate.userId(), candidate.operation(), candidate.target(),
                 candidate.idempotencyKey(), candidate.requestHash(), candidate.expiresAt());

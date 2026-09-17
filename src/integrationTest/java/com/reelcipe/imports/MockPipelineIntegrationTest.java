@@ -5,6 +5,7 @@ import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserStatus;
 import com.reelcipe.billing.domain.QuotaReservationRepository;
 import com.reelcipe.billing.domain.QuotaReservationState;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.audio.AudioExtractor;
 import com.reelcipe.imports.audio.AudioPipelineService;
 import com.reelcipe.imports.domain.ImportLease;
@@ -102,9 +103,9 @@ class MockPipelineIntegrationTest {
         byte[] source = MockSpeechTranscriber.recipeFixture();
         ImportService.ImportView created = imports.create(
                 userId,
-                "mock-pipeline-" + UUID.randomUUID(),
+                "mock-pipeline-" + UuidV7.randomUuid(),
                 new ImportService.ImportCommand(
-                        UUID.randomUUID(),
+                        UuidV7.randomUuid(),
                         ImportSourceType.UPLOAD,
                         null,
                         ImportMediaKind.VIDEO,
@@ -135,16 +136,16 @@ class MockPipelineIntegrationTest {
         RecipeService.RecipeView saved = recipes.save(
                 userId,
                 recipeId,
-                "save-" + UUID.randomUUID());
+                "save-" + UuidV7.randomUuid());
         assertThat(saved.libraryState()).isEqualTo(RecipeLibraryState.SAVED);
 
         ShoppingService.ShoppingView list = shopping.addRecipe(
                 userId,
-                "shopping-" + UUID.randomUUID(),
+                "shopping-" + UuidV7.randomUuid(),
                 new ShoppingService.RecipeAddition(
                         recipeId,
                         saved.version(),
-                        UUID.randomUUID()));
+                        UuidV7.randomUuid()));
 
         assertThat(list.items()).extracting(ShoppingService.ItemView::name)
                 .contains("pasta");
@@ -159,7 +160,7 @@ class MockPipelineIntegrationTest {
     }
 
     private UUID createUser() {
-        UUID id = UUID.randomUUID();
+        UUID id = UuidV7.randomUuid();
         Instant now = Instant.now();
         users.saveAndFlush(new User(id, "Mock pipeline test", UserStatus.ACTIVE, now, now));
         return id;

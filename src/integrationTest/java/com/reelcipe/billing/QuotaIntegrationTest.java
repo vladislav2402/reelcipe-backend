@@ -2,6 +2,7 @@ package com.reelcipe.billing;
 
 import com.reelcipe.auth.FixtureUserInitializer;
 import com.reelcipe.billing.domain.QuotaReservationState;
+import com.reelcipe.common.UuidV7;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,7 +44,7 @@ class QuotaIntegrationTest {
             for (int i = 0; i < 11; i++) {
                 calls.add(() -> {
                     try {
-                        quota.reserve(FixtureUserInitializer.ALICE_ID, UUID.randomUUID());
+                        quota.reserve(FixtureUserInitializer.ALICE_ID, UuidV7.randomUuid());
                         return true;
                     } catch (Exception exception) {
                         return false;
@@ -64,7 +65,7 @@ class QuotaIntegrationTest {
 
     @Test
     void consumeAndReleaseAreDifferentAndSettlementIsOneTime() {
-        UUID importId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
         var reservation = quota.reserve(FixtureUserInitializer.BOB_ID, importId);
 
         quota.consume(FixtureUserInitializer.BOB_ID, reservation.getId());

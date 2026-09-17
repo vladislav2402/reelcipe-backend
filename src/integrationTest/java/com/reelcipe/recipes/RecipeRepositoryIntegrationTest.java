@@ -1,6 +1,7 @@
 package com.reelcipe.recipes;
 
 import com.reelcipe.auth.FixtureUserInitializer;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.recipes.domain.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,12 +44,12 @@ class RecipeRepositoryIntegrationTest {
     @Test
     void repositoriesPersistManualRecipeAggregate() {
         UUID userId = FixtureUserInitializer.ALICE_ID;
-        UUID recipeId = UUID.randomUUID();
-        Recipe recipe = new Recipe(recipeId, userId, "Pasta", RecipeLanguage.EN, UUID.randomUUID(),
+        UUID recipeId = UuidV7.randomUuid();
+        Recipe recipe = new Recipe(recipeId, userId, "Pasta", RecipeLanguage.EN, UuidV7.randomUuid(),
                 RecipeAnalysisMode.MANUAL, RecipeLibraryState.SAVED, Instant.now());
         recipes.save(recipe);
-        ingredients.save(new RecipeIngredient(UUID.randomUUID(), recipeId, 0, "Flour", null, null, "g", "flour"));
-        steps.save(new RecipeStep(UUID.randomUUID(), recipeId, 0, "Mix ingredients"));
+        ingredients.save(new RecipeIngredient(UuidV7.randomUuid(), recipeId, 0, "Flour", null, null, "g", "flour"));
+        steps.save(new RecipeStep(UuidV7.randomUuid(), recipeId, 0, "Mix ingredients"));
         revisions.save(new RecipeRevision(recipeId, 1, userId, "{}", Instant.now()));
 
         assertThat(recipes.findByIdAndUserIdAndDeletedAtIsNull(recipeId, userId)).isPresent();
@@ -60,11 +61,11 @@ class RecipeRepositoryIntegrationTest {
     @Test
     void librarySearchReturnsEachMatchingRecipeOnceAndKeepsOwnership() {
         Instant now = Instant.now();
-        UUID recipeId = UUID.randomUUID();
+        UUID recipeId = UuidV7.randomUuid();
         recipes.save(new Recipe(recipeId, FixtureUserInitializer.ALICE_ID, "Dinner", RecipeLanguage.EN, null,
                 RecipeAnalysisMode.MANUAL, RecipeLibraryState.SAVED, now));
-        ingredients.save(new RecipeIngredient(UUID.randomUUID(), recipeId, 0, "Salt", null, null, "g", "salt"));
-        ingredients.save(new RecipeIngredient(UUID.randomUUID(), recipeId, 1, "Sea salt", null, null, "g", "sea salt"));
+        ingredients.save(new RecipeIngredient(UuidV7.randomUuid(), recipeId, 0, "Salt", null, null, "g", "salt"));
+        ingredients.save(new RecipeIngredient(UuidV7.randomUuid(), recipeId, 1, "Sea salt", null, null, "g", "sea salt"));
 
         List<Recipe> aliceResults = recipes.findLibrary(
                 FixtureUserInitializer.ALICE_ID,

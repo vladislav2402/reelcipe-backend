@@ -1,6 +1,7 @@
 package com.reelcipe.imports.recipe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.AudioOutcome;
 import com.reelcipe.imports.transcription.domain.SpeechStatus;
 import org.junit.jupiter.api.Test;
@@ -19,9 +20,9 @@ class RecipeCandidateSemanticValidatorTest {
 
     @Test
     void acceptsEvidenceOnlyFromTheSnapshotSource() {
-        UUID segmentId = UUID.randomUUID();
+        UUID segmentId = UuidV7.randomUuid();
         RecipeTextSnapshot snapshot = new RecipeTextSnapshot(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 1,
                 "transcript-hash",
                 List.of(new RecipeTextSnapshot.TranscriptSegment(
@@ -49,11 +50,11 @@ class RecipeCandidateSemanticValidatorTest {
     @Test
     void rejectsEvidenceQuoteThatIsNotInTheTranscript() {
         RecipeTextSnapshot snapshot = new RecipeTextSnapshot(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 1,
                 "transcript-hash",
                 List.of(new RecipeTextSnapshot.TranscriptSegment(
-                        UUID.randomUUID(), 0, 0, 1800, "Add pasta.")),
+                        UuidV7.randomUuid(), 0, 0, 1800, "Add pasta.")),
                 null,
                 null,
                 AudioOutcome.AUDIO_READY,

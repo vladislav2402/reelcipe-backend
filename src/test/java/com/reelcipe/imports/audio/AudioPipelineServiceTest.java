@@ -1,5 +1,6 @@
 package com.reelcipe.imports.audio;
 
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.AudioCheckpointPersistence;
 import com.reelcipe.imports.ImportLeaseControl;
 import com.reelcipe.imports.ImportProcessingException;
@@ -30,7 +31,7 @@ class AudioPipelineServiceTest {
 
     @Test
     void normalizesAudioAndPersistsCheckpoint() {
-        UUID importId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
         byte[] sourceBytes = "source-media".getBytes(StandardCharsets.UTF_8);
         MediaAsset source = source(importId, sourceBytes.length);
         MediaAssetRepository assets = mock(MediaAssetRepository.class);
@@ -55,7 +56,7 @@ class AudioPipelineServiceTest {
 
     @Test
     void returnsDescriptionOnlyWithoutAudioStream() {
-        UUID importId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
         byte[] sourceBytes = "video-without-audio".getBytes(StandardCharsets.UTF_8);
         MediaAsset source = source(importId, sourceBytes.length);
         MediaAssetRepository assets = mock(MediaAssetRepository.class);
@@ -80,7 +81,7 @@ class AudioPipelineServiceTest {
 
     @Test
     void mapsExtractorTimeoutToTransientFailure() {
-        UUID importId = UUID.randomUUID();
+        UUID importId = UuidV7.randomUuid();
         byte[] sourceBytes = "source-media".getBytes(StandardCharsets.UTF_8);
         MediaAsset source = source(importId, sourceBytes.length);
         MediaAssetRepository assets = mock(MediaAssetRepository.class);
@@ -122,10 +123,10 @@ class AudioPipelineServiceTest {
 
     private MediaAsset source(UUID importId, long sizeBytes) {
         MediaAsset source = new MediaAsset(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 importId,
-                UUID.randomUUID(),
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
+                UuidV7.randomUuid(),
                 MediaAssetType.SOURCE,
                 "staging/source",
                 sizeBytes,
@@ -140,7 +141,7 @@ class AudioPipelineServiceTest {
     private ImportLease lease(UUID importId) {
         return new ImportLease(
                 importId,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 "worker-1",
                 1,
                 1,

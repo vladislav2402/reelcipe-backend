@@ -1,6 +1,7 @@
 package com.reelcipe.imports;
 
 import com.reelcipe.auth.FixtureUserInitializer;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,9 +34,9 @@ class ImportJobRepositoryIntegrationTest {
 
     @Test
     void repositoryPersistsImportAndEnforcesUserClientLookup() {
-        UUID clientRequestId = UUID.randomUUID();
+        UUID clientRequestId = UuidV7.randomUuid();
         ImportJob job = new ImportJob(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 FixtureUserInitializer.ALICE_ID,
                 clientRequestId,
                 ImportSourceType.LINK,

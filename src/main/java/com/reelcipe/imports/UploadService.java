@@ -2,6 +2,7 @@ package com.reelcipe.imports;
 
 import com.reelcipe.auth.domain.UserRepository;
 import com.reelcipe.auth.domain.UserStatus;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.storage.ObjectStorage;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,7 +62,7 @@ public class UploadService {
         }
         Instant now = clock.instant();
         Instant urlExpiresAt = urlExpiresAt(now, job.getInputDeadlineAt());
-        UUID attemptId = UUID.randomUUID();
+        UUID attemptId = UuidV7.randomUuid();
         UploadAttempt attempt = new UploadAttempt(
                 attemptId,
                 job.getId(),
@@ -142,7 +143,7 @@ public class UploadService {
             throw conflict("Maximum upload attempts reached");
         }
         Instant urlExpiresAt = urlExpiresAt(now, job.getInputDeadlineAt());
-        UUID attemptId = UUID.randomUUID();
+        UUID attemptId = UuidV7.randomUuid();
         UploadAttempt attempt = new UploadAttempt(
                 attemptId,
                 job.getId(),
@@ -204,7 +205,7 @@ public class UploadService {
             throw conflict("Upload attempt is no longer current");
         }
         MediaAsset asset = new MediaAsset(
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 target.importId(),
                 target.userId(),
                 target.attemptId(),

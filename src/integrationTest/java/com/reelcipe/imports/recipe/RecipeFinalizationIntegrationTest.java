@@ -6,6 +6,7 @@ import com.reelcipe.auth.domain.UserStatus;
 import com.reelcipe.billing.QuotaService;
 import com.reelcipe.billing.domain.QuotaReservationRepository;
 import com.reelcipe.billing.domain.QuotaReservationState;
+import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.ImportQueue;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.imports.recipe.domain.RecipeCandidate;
@@ -64,14 +65,14 @@ class RecipeFinalizationIntegrationTest {
 
     @Test
     void createsOneDraftEvidenceAndConsumesReservationAtomically() {
-        UUID userId = UUID.randomUUID();
-        UUID importId = UUID.randomUUID();
+        UUID userId = UuidV7.randomUuid();
+        UUID importId = UuidV7.randomUuid();
         Instant now = Instant.now();
         users.saveAndFlush(new User(userId, "Finalization test", UserStatus.ACTIVE, now, now));
         ImportJob job = new ImportJob(
                 importId,
                 userId,
-                UUID.randomUUID(),
+                UuidV7.randomUuid(),
                 ImportSourceType.LINK,
                 "https://example.test/recipe",
                 null,
@@ -103,7 +104,7 @@ class RecipeFinalizationIntegrationTest {
                 "b21-v1",
                 "mock",
                 "mock-v1");
-        UUID candidateId = UUID.randomUUID();
+        UUID candidateId = UuidV7.randomUuid();
         candidates.saveAndFlush(new RecipeCandidate(
                 candidateId,
                 importId,
