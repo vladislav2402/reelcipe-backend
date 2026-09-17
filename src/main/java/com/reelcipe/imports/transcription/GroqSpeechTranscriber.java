@@ -3,6 +3,7 @@ package com.reelcipe.imports.transcription;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.reelcipe.imports.transcription.domain.SpeechStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ public class GroqSpeechTranscriber implements SpeechTranscriber {
     private final int maxRequestBytes;
     private final Clock clock;
 
+    @Autowired
     public GroqSpeechTranscriber(
             ObjectMapper mapper,
             @Value("${app.providers.adapters.asr.base-url:https://api.groq.com/openai/v1}")
