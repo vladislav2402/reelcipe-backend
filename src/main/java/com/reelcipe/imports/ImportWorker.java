@@ -2,6 +2,7 @@ package com.reelcipe.imports;
 
 import com.reelcipe.imports.domain.ImportFailure;
 import com.reelcipe.imports.domain.ImportLease;
+import com.reelcipe.providers.ProviderAdmissionException;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -83,8 +84,16 @@ public class ImportWorker {
     private void execute(RunningLease runningLease) {
         try {
             handler.handle(runningLease.lease, runningLease.control);
+        } catch (ProviderAdmissionException exception) {
+            retryService.handle(
+                    runningLease.lease,
+                    exception.failure(),
+                    exception.retryAfter());
         } catch (ImportProcessingException exception) {
-            retryService.handle(runningLease.lease, exception.failure());
+            retryService.handle(
+                    runningLease.lease,
+                    exception.failure(),
+                    exception.retryAfter());
         } catch (RuntimeException exception) {
             retryService.handle(
                     runningLease.lease,

@@ -93,6 +93,12 @@ public class TranscriptionPipelineService {
     }
 
     private String errorCode(SpeechTranscriptionException exception) {
+        if (Integer.valueOf(429).equals(exception.statusCode())) {
+            return "ASR_RATE_LIMITED";
+        }
+        if (exception.statusCode() != null && exception.statusCode() >= 500) {
+            return "ASR_PROVIDER_5XX";
+        }
         return switch (exception.kind()) {
             case TIMEOUT -> "ASR_TIMEOUT";
             case UNKNOWN -> "ASR_UNKNOWN";
@@ -105,7 +111,10 @@ public class TranscriptionPipelineService {
             return new ImportProcessingException(
                     ImportFailure.permanent("ASR_INVALID_RESPONSE"), exception);
         }
-        return transientError(errorCode(exception), exception);
+        return new ImportProcessingException(
+                ImportFailure.transientError(errorCode(exception)),
+                exception,
+                exception.retryAfter());
     }
 
     private ImportProcessingException transientError(String code) {

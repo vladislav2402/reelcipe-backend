@@ -6,6 +6,7 @@ import com.reelcipe.imports.recipe.domain.RecipeCandidateRepository;
 import com.reelcipe.imports.transcription.domain.AiAttempt;
 import com.reelcipe.imports.transcription.domain.AiAttemptKind;
 import com.reelcipe.imports.transcription.domain.AiAttemptRepository;
+import com.reelcipe.providers.ProviderAdmissionService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,18 +22,21 @@ public class RecipeExtractionCheckpointPersistence {
     private final Clock clock;
     private final String provider;
     private final String model;
+    private final ProviderAdmissionService admissions;
 
     public RecipeExtractionCheckpointPersistence(
             ImportJobRepository jobs,
             AiAttemptRepository attempts,
             RecipeCandidateRepository candidates,
             Clock clock,
+            ProviderAdmissionService admissions,
             @Value("${app.llm.provider:mock}") String provider,
             @Value("${app.llm.mock-model:reelcipe-mock-llm-v1}") String model) {
         this.jobs = jobs;
         this.attempts = attempts;
         this.candidates = candidates;
         this.clock = clock;
+        this.admissions = admissions;
         this.provider = provider;
         this.model = model;
     }
@@ -44,8 +48,17 @@ public class RecipeExtractionCheckpointPersistence {
                         lease.importId(), AiAttemptKind.LLM)
                 .map(attempt -> attempt.getAttemptNumber() + 1)
                 .orElse(1);
+        UUID attemptId = UUID.randomUUID();
+        ProviderAdmissionService.Reservation reservation = admissions.reserve(
+                new ProviderAdmissionService.Request(
+                        attemptId,
+                        lease.importId(),
+                        lease.userId(),
+                        provider,
+                        "LLM",
+                        estimateUnits(snapshot)));
         AiAttempt attempt = new AiAttempt(
-                UUID.randomUUID(),
+                attemptId,
                 lease.importId(),
                 lease.userId(),
                 AiAttemptKind.LLM,
@@ -53,9 +66,10 @@ public class RecipeExtractionCheckpointPersistence {
                 snapshot.inputHash(),
                 provider,
                 model,
+                reservation.id(),
                 clock.instant());
         attempts.save(attempt);
-        return new StartedAttempt(attempt.getId(), provider, model);
+        return new StartedAttempt(attempt.getId(), provider, model, reservation.id());
     }
 
     @Transactional
@@ -73,6 +87,16 @@ public class RecipeExtractionCheckpointPersistence {
                 .orElseThrow(() -> new IllegalStateException("LLM attempt was not found"));
         attempt.succeed(result.usage().inputUnits(), result.usage().outputUnits(), clock);
         attempts.save(attempt);
+        com.reelcipe.providers.ProviderAdmissionService.ConsumeResult settlement = admissions.consume(
+                started.admissionId(),
+                result.usage().inputUnits() + result.usage().outputUnits());
+        if (!settlement.accepted()) {
+            attempt.markUnknown("PROVIDER_USAGE_OVER_BUDGET", clock);
+            attempts.save(attempt);
+            throw new com.reelcipe.providers.ProviderAdmissionException(
+                    "PROVIDER_USAGE_OVER_BUDGET",
+                    settlement.retryAfter());
+        }
         job.checkpoint(lease.stage(), candidate.getId().toString(), clock);
         job.completeStage(lease.stage(), ImportStatus.VALIDATING, clock);
         jobs.save(job);
@@ -96,6 +120,7 @@ public class RecipeExtractionCheckpointPersistence {
         attempts.findById(attemptId).ifPresent(attempt -> {
             attempt.markUnknown(errorCode, clock);
             attempts.save(attempt);
+            admissions.unknown(attempt.getProviderAdmissionId(), errorCode);
         });
     }
 
@@ -104,6 +129,7 @@ public class RecipeExtractionCheckpointPersistence {
         attempts.findById(attemptId).ifPresent(attempt -> {
             attempt.markStale(clock);
             attempts.save(attempt);
+            admissions.stale(attempt.getProviderAdmissionId());
         });
     }
 
@@ -147,6 +173,20 @@ public class RecipeExtractionCheckpointPersistence {
                 .orElseThrow(() -> new LeaseLostException(lease));
     }
 
-    public record StartedAttempt(UUID id, String provider, String model) {
+    private long estimateUnits(RecipeTextSnapshot snapshot) {
+        long textLength = snapshot.transcriptSegments().stream()
+                .mapToLong(segment -> segment.text() == null ? 0 : segment.text().length())
+                .sum();
+        textLength += snapshot.authorDescription() == null
+                ? 0
+                : snapshot.authorDescription().length();
+        textLength += snapshot.userText() == null ? 0 : snapshot.userText().length();
+        return Math.max(1000, textLength * 2L);
+    }
+
+    public record StartedAttempt(UUID id, String provider, String model, UUID admissionId) {
+        public StartedAttempt(UUID id, String provider, String model) {
+            this(id, provider, model, null);
+        }
     }
 }

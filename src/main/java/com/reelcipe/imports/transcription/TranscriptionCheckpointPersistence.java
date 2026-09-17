@@ -3,6 +3,7 @@ package com.reelcipe.imports.transcription;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.imports.transcription.domain.*;
 import com.reelcipe.operations.deletion.DeletionTaskService;
+import com.reelcipe.providers.ProviderAdmissionService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ public class TranscriptionCheckpointPersistence {
     private final Clock clock;
     private final String provider;
     private final String model;
+    private final ProviderAdmissionService admissions;
 
     public TranscriptionCheckpointPersistence(
             ImportJobRepository jobs,
@@ -32,6 +34,7 @@ public class TranscriptionCheckpointPersistence {
             TranscriptionSegmentRepository segments,
             DeletionTaskService deletions,
             Clock clock,
+            ProviderAdmissionService admissions,
             @Value("${app.asr.provider:mock}") String provider,
             @Value("${app.asr.mock-model:reelcipe-mock-asr-v1}") String model) {
         this.jobs = jobs;
@@ -40,6 +43,7 @@ public class TranscriptionCheckpointPersistence {
         this.segments = segments;
         this.deletions = deletions;
         this.clock = clock;
+        this.admissions = admissions;
         this.provider = provider;
         this.model = model;
     }
@@ -51,8 +55,17 @@ public class TranscriptionCheckpointPersistence {
                         lease.importId(), AiAttemptKind.ASR)
                 .map(attempt -> attempt.getAttemptNumber() + 1)
                 .orElse(1);
+        UUID attemptId = UUID.randomUUID();
+        ProviderAdmissionService.Reservation reservation = admissions.reserve(
+                new ProviderAdmissionService.Request(
+                        attemptId,
+                        lease.importId(),
+                        lease.userId(),
+                        provider,
+                        "ASR",
+                        estimateUnits(lease, inputHash)));
         AiAttempt attempt = new AiAttempt(
-                UUID.randomUUID(),
+                attemptId,
                 lease.importId(),
                 lease.userId(),
                 AiAttemptKind.ASR,
@@ -60,9 +73,10 @@ public class TranscriptionCheckpointPersistence {
                 inputHash,
                 provider,
                 model,
+                reservation.id(),
                 clock.instant());
         attempts.save(attempt);
-        return new StartedAttempt(attempt.getId(), provider, model);
+        return new StartedAttempt(attempt.getId(), provider, model, reservation.id());
     }
 
     @Transactional
@@ -89,6 +103,16 @@ public class TranscriptionCheckpointPersistence {
                 .orElseThrow(() -> new IllegalStateException("ASR attempt was not found"));
         attempt.succeed(result.usage().inputSeconds(), result.usage().units(), clock);
         attempts.save(attempt);
+        com.reelcipe.providers.ProviderAdmissionService.ConsumeResult settlement = admissions.consume(
+                started.admissionId(),
+                result.usage().units() + result.usage().inputSeconds());
+        if (!settlement.accepted()) {
+            attempt.markUnknown("PROVIDER_USAGE_OVER_BUDGET", clock);
+            attempts.save(attempt);
+            throw new com.reelcipe.providers.ProviderAdmissionException(
+                    "PROVIDER_USAGE_OVER_BUDGET",
+                    settlement.retryAfter());
+        }
         job.checkpoint(lease.stage(), transcription.getId().toString(), clock);
         job.completeStage(lease.stage(), ImportStatus.EXTRACTING_RECIPE, clock);
         jobs.save(job);
@@ -126,6 +150,7 @@ public class TranscriptionCheckpointPersistence {
         attempts.findById(attemptId).ifPresent(attempt -> {
             attempt.markUnknown(errorCode, clock);
             attempts.save(attempt);
+            admissions.unknown(attempt.getProviderAdmissionId(), errorCode);
         });
     }
 
@@ -134,6 +159,7 @@ public class TranscriptionCheckpointPersistence {
         attempts.findById(attemptId).ifPresent(attempt -> {
             attempt.markStale(clock);
             attempts.save(attempt);
+            admissions.stale(attempt.getProviderAdmissionId());
         });
     }
 
@@ -228,6 +254,13 @@ public class TranscriptionCheckpointPersistence {
                 .orElseThrow(() -> new LeaseLostException(lease));
     }
 
-    public record StartedAttempt(UUID id, String provider, String model) {
+    private long estimateUnits(ImportLease lease, String inputHash) {
+        return Math.max(1, inputHash == null ? 1 : inputHash.length());
+    }
+
+    public record StartedAttempt(UUID id, String provider, String model, UUID admissionId) {
+        public StartedAttempt(UUID id, String provider, String model) {
+            this(id, provider, model, null);
+        }
     }
 }

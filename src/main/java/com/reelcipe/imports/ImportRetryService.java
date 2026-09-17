@@ -42,6 +42,14 @@ public class ImportRetryService {
 
     @Transactional
     public FailureOutcome handle(ImportLease lease, ImportFailure failure) {
+        return handle(lease, failure, null);
+    }
+
+    @Transactional
+    public FailureOutcome handle(
+            ImportLease lease,
+            ImportFailure failure,
+            java.time.Instant retryAfter) {
         if (users.findLockedByIdAndStatus(lease.userId(), UserStatus.ACTIVE).isEmpty()) {
             return FailureOutcome.LEASE_LOST;
         }
@@ -61,8 +69,13 @@ public class ImportRetryService {
             quota.releaseImport(job.getUserId(), job.getId());
             return FailureOutcome.FAILED;
         }
+        java.time.Instant nextAttempt = retryPolicy.nextAttemptAt(
+                clock.instant(), job.getStageAttempts() + 1);
+        if (retryAfter != null && retryAfter.isAfter(nextAttempt)) {
+            nextAttempt = retryAfter;
+        }
         job.scheduleRetry(
-                retryPolicy.nextAttemptAt(clock.instant(), job.getStageAttempts() + 1),
+                nextAttempt,
                 failure.errorCode(),
                 clock);
         jobs.save(job);

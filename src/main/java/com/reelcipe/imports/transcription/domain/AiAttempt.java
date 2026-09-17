@@ -29,6 +29,8 @@ public class AiAttempt {
     private String provider;
     @Column(nullable = false)
     private String model;
+    @Column(name = "provider_admission_id")
+    private UUID providerAdmissionId;
     @Column(name = "error_code")
     private String errorCode;
     @Column(name = "usage_seconds")
@@ -56,6 +58,7 @@ public class AiAttempt {
             String inputHash,
             String provider,
             String model,
+            UUID providerAdmissionId,
             Instant now) {
         this.id = id;
         this.importId = importId;
@@ -66,9 +69,23 @@ public class AiAttempt {
         this.inputHash = inputHash;
         this.provider = provider;
         this.model = model;
+        this.providerAdmissionId = providerAdmissionId;
         this.startedAt = now;
         this.createdAt = now;
         this.updatedAt = now;
+    }
+
+    public AiAttempt(
+            UUID id,
+            UUID importId,
+            UUID userId,
+            AiAttemptKind kind,
+            int attemptNumber,
+            String inputHash,
+            String provider,
+            String model,
+            Instant now) {
+        this(id, importId, userId, kind, attemptNumber, inputHash, provider, model, null, now);
     }
 
     public void succeed(int usageSeconds, int usageUnits, Clock clock) {
@@ -131,6 +148,10 @@ public class AiAttempt {
 
     public String getModel() {
         return model;
+    }
+
+    public UUID getProviderAdmissionId() {
+        return providerAdmissionId;
     }
 
     public String getErrorCode() {

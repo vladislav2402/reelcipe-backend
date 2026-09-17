@@ -52,6 +52,31 @@ app:
     upload-reconciler-batch-size: ${APP_WORKER_UPLOAD_RECONCILER_BATCH_SIZE:20}
   providers:
     mode: ${APP_PROVIDERS_MODE:mock}
+    admission:
+      daily-budget-units: ${APP_PROVIDERS_DAILY_BUDGET_UNITS:100000}
+      max-concurrent-attempts: ${APP_PROVIDERS_MAX_CONCURRENT_ATTEMPTS:2}
+      reservation-ttl: ${APP_PROVIDERS_RESERVATION_TTL:PT5M}
+      failure-window: ${APP_PROVIDERS_FAILURE_WINDOW:PT1H}
+      max-failures-per-user: ${APP_PROVIDERS_MAX_FAILURES_PER_USER:3}
+      user-backoff: ${APP_PROVIDERS_USER_BACKOFF:PT15M}
+      recovery-interval-ms: ${APP_PROVIDERS_ADMISSION_RECOVERY_INTERVAL_MS:30000}
+    real-calls-enabled: ${APP_PROVIDERS_REAL_CALLS_ENABLED:false}
+    redaction-enabled: ${APP_PROVIDERS_REDACTION_ENABLED:true}
+    http:
+      connect-timeout: ${APP_PROVIDERS_HTTP_CONNECT_TIMEOUT:PT5S}
+      read-timeout: ${APP_PROVIDERS_HTTP_READ_TIMEOUT:PT60S}
+      max-response-bytes: ${APP_PROVIDERS_HTTP_MAX_RESPONSE_BYTES:1048576}
+      api-rate-limit-per-minute: ${APP_PROVIDERS_API_RATE_LIMIT_PER_MINUTE:60}
+    circuit-breaker:
+      failure-threshold: ${APP_PROVIDERS_CIRCUIT_FAILURE_THRESHOLD:5}
+      open-duration: ${APP_PROVIDERS_CIRCUIT_OPEN_DURATION:PT30S}
+    adapters:
+      asr:
+        base-url: ${APP_ASR_BASE_URL:}
+        api-key-secret-name: ${APP_ASR_API_KEY_SECRET_NAME:ASR_API_KEY}
+      llm:
+        base-url: ${APP_LLM_BASE_URL:}
+        api-key-secret-name: ${APP_LLM_API_KEY_SECRET_NAME:LLM_API_KEY}
   limits:
     max-media-duration-seconds: ${APP_MAX_MEDIA_DURATION_SECONDS:180}
     max-video-size-bytes: ${APP_MAX_VIDEO_SIZE_BYTES:104857600}

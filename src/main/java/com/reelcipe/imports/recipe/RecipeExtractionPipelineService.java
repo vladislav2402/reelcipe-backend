@@ -178,6 +178,12 @@ public class RecipeExtractionPipelineService {
     }
 
     private String errorCode(RecipeExtractionException exception) {
+        if (Integer.valueOf(429).equals(exception.statusCode())) {
+            return "LLM_RATE_LIMITED";
+        }
+        if (exception.statusCode() != null && exception.statusCode() >= 500) {
+            return "LLM_PROVIDER_5XX";
+        }
         return switch (exception.kind()) {
             case TIMEOUT -> "LLM_TIMEOUT";
             case UNKNOWN -> "LLM_UNKNOWN";
@@ -185,7 +191,10 @@ public class RecipeExtractionPipelineService {
     }
 
     private ImportProcessingException map(RecipeExtractionException exception) {
-        return transientError(errorCode(exception), exception);
+        return new ImportProcessingException(
+                ImportFailure.transientError(errorCode(exception)),
+                exception,
+                exception.retryAfter());
     }
 
     private ImportProcessingException permanentError(String code) {
