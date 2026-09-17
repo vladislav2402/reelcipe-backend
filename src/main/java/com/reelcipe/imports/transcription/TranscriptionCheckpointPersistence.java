@@ -4,6 +4,7 @@ import com.reelcipe.imports.domain.*;
 import com.reelcipe.imports.transcription.domain.*;
 import com.reelcipe.operations.deletion.DeletionTaskService;
 import com.reelcipe.providers.ProviderAdmissionService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class TranscriptionCheckpointPersistence {
     private final String model;
     private final ProviderAdmissionService admissions;
 
+    @Autowired
     public TranscriptionCheckpointPersistence(
             ImportJobRepository jobs,
             AiAttemptRepository attempts,
@@ -36,7 +38,8 @@ public class TranscriptionCheckpointPersistence {
             Clock clock,
             ProviderAdmissionService admissions,
             @Value("${app.asr.provider:mock}") String provider,
-            @Value("${app.asr.mock-model:reelcipe-mock-asr-v1}") String model) {
+            @Value("${app.asr.mock-model:reelcipe-mock-asr-v1}") String mockModel,
+            @Value("${app.asr.groq-model:whisper-large-v3-turbo}") String groqModel) {
         this.jobs = jobs;
         this.attempts = attempts;
         this.transcriptions = transcriptions;
@@ -45,7 +48,7 @@ public class TranscriptionCheckpointPersistence {
         this.clock = clock;
         this.admissions = admissions;
         this.provider = provider;
-        this.model = model;
+        this.model = "groq".equals(provider) ? groqModel : mockModel;
     }
 
     @Transactional

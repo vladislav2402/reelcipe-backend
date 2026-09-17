@@ -73,10 +73,10 @@ app:
       open-duration: ${APP_PROVIDERS_CIRCUIT_OPEN_DURATION:PT30S}
     adapters:
       asr:
-        base-url: ${APP_ASR_BASE_URL:}
+        base-url: ${APP_ASR_BASE_URL:https://api.groq.com/openai/v1}
         api-key-secret-name: ${APP_ASR_API_KEY_SECRET_NAME:ASR_API_KEY}
       llm:
-        base-url: ${APP_LLM_BASE_URL:}
+        base-url: ${APP_LLM_BASE_URL:https://api.groq.com/openai/v1}
         api-key-secret-name: ${APP_LLM_API_KEY_SECRET_NAME:LLM_API_KEY}
   limits:
     max-media-duration-seconds: ${APP_MAX_MEDIA_DURATION_SECONDS:180}

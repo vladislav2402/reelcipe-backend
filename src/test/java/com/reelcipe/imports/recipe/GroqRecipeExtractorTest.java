@@ -107,6 +107,16 @@ class GroqRecipeExtractorTest {
                         });
     }
 
+    @Test
+    void usesGroqBaseUrlWhenConfigurationIsBlank() {
+        assertThat(GroqRecipeExtractor.normalizeBaseUrl(null))
+                .isEqualTo("https://api.groq.com/openai/v1");
+        assertThat(GroqRecipeExtractor.normalizeBaseUrl("  "))
+                .isEqualTo("https://api.groq.com/openai/v1");
+        assertThat(GroqRecipeExtractor.normalizeBaseUrl("http://localhost:9000///"))
+                .isEqualTo("http://localhost:9000");
+    }
+
     private GroqRecipeExtractor extractor() {
         return new GroqRecipeExtractor(
                 JsonMapper.builder().build(),

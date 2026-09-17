@@ -9,6 +9,7 @@ import com.reelcipe.imports.transcription.domain.Transcription;
 import com.reelcipe.imports.transcription.domain.TranscriptionRepository;
 import com.reelcipe.imports.transcription.domain.TranscriptionSegment;
 import com.reelcipe.imports.transcription.domain.TranscriptionSegmentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class RecipeExtractionPipelineService {
     private final String model;
     private final int correctiveRetryLimit;
 
+    @Autowired
     public RecipeExtractionPipelineService(
             ImportJobRepository jobs,
             TranscriptionRepository transcriptions,
@@ -47,7 +49,8 @@ public class RecipeExtractionPipelineService {
             @Value("${app.llm.schema-version:recipe-extraction-v1}") String schemaVersion,
             @Value("${app.llm.pipeline-version:b21-v1}") String pipelineVersion,
             @Value("${app.llm.provider:mock}") String provider,
-            @Value("${app.llm.mock-model:reelcipe-mock-llm-v1}") String model,
+            @Value("${app.llm.mock-model:reelcipe-mock-llm-v1}") String mockModel,
+            @Value("${app.llm.groq-model:openai/gpt-oss-120b}") String groqModel,
             @Value("${app.llm.corrective-retry-limit:1}") int correctiveRetryLimit) {
         this.jobs = jobs;
         this.transcriptions = transcriptions;
@@ -61,8 +64,41 @@ public class RecipeExtractionPipelineService {
         this.schemaVersion = schemaVersion;
         this.pipelineVersion = pipelineVersion;
         this.provider = provider;
-        this.model = model;
+        this.model = "groq".equals(provider) ? groqModel : mockModel;
         this.correctiveRetryLimit = Math.max(0, correctiveRetryLimit);
+    }
+
+    public RecipeExtractionPipelineService(
+            ImportJobRepository jobs,
+            TranscriptionRepository transcriptions,
+            TranscriptionSegmentRepository segments,
+            RecipeCandidateRepository candidates,
+            RecipeExtractor extractor,
+            RecipeCandidateValidator validator,
+            RecipeExtractionCheckpointPersistence checkpoints,
+            String targetLanguage,
+            String promptVersion,
+            String schemaVersion,
+            String pipelineVersion,
+            String provider,
+            String model,
+            int correctiveRetryLimit) {
+        this(
+                jobs,
+                transcriptions,
+                segments,
+                candidates,
+                extractor,
+                validator,
+                checkpoints,
+                targetLanguage,
+                promptVersion,
+                schemaVersion,
+                pipelineVersion,
+                provider,
+                model,
+                model,
+                correctiveRetryLimit);
     }
 
     public void extract(ImportLease lease, ImportLeaseControl control) {

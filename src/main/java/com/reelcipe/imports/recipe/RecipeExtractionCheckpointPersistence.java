@@ -7,6 +7,7 @@ import com.reelcipe.imports.transcription.domain.AiAttempt;
 import com.reelcipe.imports.transcription.domain.AiAttemptKind;
 import com.reelcipe.imports.transcription.domain.AiAttemptRepository;
 import com.reelcipe.providers.ProviderAdmissionService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ public class RecipeExtractionCheckpointPersistence {
     private final String model;
     private final ProviderAdmissionService admissions;
 
+    @Autowired
     public RecipeExtractionCheckpointPersistence(
             ImportJobRepository jobs,
             AiAttemptRepository attempts,
@@ -31,14 +33,15 @@ public class RecipeExtractionCheckpointPersistence {
             Clock clock,
             ProviderAdmissionService admissions,
             @Value("${app.llm.provider:mock}") String provider,
-            @Value("${app.llm.mock-model:reelcipe-mock-llm-v1}") String model) {
+            @Value("${app.llm.mock-model:reelcipe-mock-llm-v1}") String mockModel,
+            @Value("${app.llm.groq-model:openai/gpt-oss-120b}") String groqModel) {
         this.jobs = jobs;
         this.attempts = attempts;
         this.candidates = candidates;
         this.clock = clock;
         this.admissions = admissions;
         this.provider = provider;
-        this.model = model;
+        this.model = "groq".equals(provider) ? groqModel : mockModel;
     }
 
     @Transactional

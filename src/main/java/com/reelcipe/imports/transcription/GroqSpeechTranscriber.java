@@ -32,6 +32,8 @@ import java.util.UUID;
         "'${app.asr.provider:mock}' == 'groq'"
                 + " && '${app.providers.real-calls-enabled:false}' == 'true'")
 public class GroqSpeechTranscriber implements SpeechTranscriber {
+    private static final String DEFAULT_BASE_URL = "https://api.groq.com/openai/v1";
+
     private final ObjectMapper mapper;
     private final HttpClient client;
     private final URI endpoint;
@@ -53,12 +55,19 @@ public class GroqSpeechTranscriber implements SpeechTranscriber {
             Clock clock) {
         this(
                 mapper,
-                URI.create(baseUrl + "/audio/transcriptions"),
+                URI.create(normalizeBaseUrl(baseUrl) + "/audio/transcriptions"),
                 apiKey,
                 model,
                 timeout,
                 maxRequestBytes,
                 clock);
+    }
+
+    static String normalizeBaseUrl(String baseUrl) {
+        String value = baseUrl == null || baseUrl.isBlank()
+                ? DEFAULT_BASE_URL
+                : baseUrl.trim();
+        return value.replaceAll("/+$", "");
     }
 
     GroqSpeechTranscriber(

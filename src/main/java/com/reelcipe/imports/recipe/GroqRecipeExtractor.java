@@ -31,6 +31,8 @@ import java.util.Map;
         "'${app.llm.provider:mock}' == 'groq'"
                 + " && '${app.providers.real-calls-enabled:false}' == 'true'")
 public class GroqRecipeExtractor implements RecipeExtractor {
+    private static final String DEFAULT_BASE_URL = "https://api.groq.com/openai/v1";
+
     private final ObjectMapper mapper;
     private final HttpClient client;
     private final URI endpoint;
@@ -55,13 +57,20 @@ public class GroqRecipeExtractor implements RecipeExtractor {
             Clock clock) {
         this(
                 mapper,
-                URI.create(baseUrl + "/chat/completions"),
+                URI.create(normalizeBaseUrl(baseUrl) + "/chat/completions"),
                 apiKey,
                 model,
                 timeout,
                 maxOutputTokens,
                 maxRequestBytes,
                 clock);
+    }
+
+    static String normalizeBaseUrl(String baseUrl) {
+        String value = baseUrl == null || baseUrl.isBlank()
+                ? DEFAULT_BASE_URL
+                : baseUrl.trim();
+        return value.replaceAll("/+$", "");
     }
 
     GroqRecipeExtractor(
