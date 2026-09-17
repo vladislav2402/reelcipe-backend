@@ -7,7 +7,10 @@ public interface RecipeExtractor {
 
     Result correct(RecipeTextSnapshot snapshot, String invalidJson, List<String> errors);
 
-    record Result(String candidateJson, Usage usage) {
+    record Result(String candidateJson, Usage usage, String providerRequestId) {
+        public Result(String candidateJson, Usage usage) {
+            this(candidateJson, usage, null);
+        }
     }
 
     record Usage(int inputUnits, int outputUnits) {

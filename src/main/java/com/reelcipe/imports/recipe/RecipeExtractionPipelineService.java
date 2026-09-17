@@ -187,10 +187,17 @@ public class RecipeExtractionPipelineService {
         return switch (exception.kind()) {
             case TIMEOUT -> "LLM_TIMEOUT";
             case UNKNOWN -> "LLM_UNKNOWN";
+            case REFUSAL -> "LLM_REFUSAL";
+            case INVALID_RESPONSE -> "LLM_INVALID_RESPONSE";
         };
     }
 
     private ImportProcessingException map(RecipeExtractionException exception) {
+        if (exception.kind() == RecipeExtractionException.Kind.REFUSAL) {
+            return new ImportProcessingException(
+                    ImportFailure.permanent(errorCode(exception)),
+                    exception);
+        }
         return new ImportProcessingException(
                 ImportFailure.transientError(errorCode(exception)),
                 exception,

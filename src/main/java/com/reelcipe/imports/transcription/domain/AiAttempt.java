@@ -31,6 +31,8 @@ public class AiAttempt {
     private String model;
     @Column(name = "provider_admission_id")
     private UUID providerAdmissionId;
+    @Column(name = "provider_request_id")
+    private String providerRequestId;
     @Column(name = "error_code")
     private String errorCode;
     @Column(name = "usage_seconds")
@@ -97,6 +99,11 @@ public class AiAttempt {
         updatedAt = completedAt;
     }
 
+    public void setProviderRequestId(String providerRequestId, Clock clock) {
+        this.providerRequestId = providerRequestId;
+        updatedAt = clock.instant();
+    }
+
     public void markUnknown(String errorCode, Clock clock) {
         if (status != AiAttemptStatus.STARTED) {
             return;
@@ -152,6 +159,10 @@ public class AiAttempt {
 
     public UUID getProviderAdmissionId() {
         return providerAdmissionId;
+    }
+
+    public String getProviderRequestId() {
+        return providerRequestId;
     }
 
     public String getErrorCode() {

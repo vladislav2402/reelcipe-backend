@@ -56,3 +56,6 @@ databaseChangeLog:
   - include:
       file: changes/019-groq-transcription.xml
       relativeToChangelogFile: true
+  - include:
+      file: changes/020-llm-request-metadata.xml
+      relativeToChangelogFile: true

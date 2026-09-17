@@ -49,6 +49,8 @@ public class RecipeExtractionException extends RuntimeException {
 
     public enum Kind {
         TIMEOUT,
-        UNKNOWN
+        UNKNOWN,
+        REFUSAL,
+        INVALID_RESPONSE
     }
 }

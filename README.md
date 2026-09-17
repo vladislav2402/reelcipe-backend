@@ -43,11 +43,15 @@ provide the key through the environment without committing it:
 ```powershell
 $env:APP_PROVIDERS_REAL_CALLS_ENABLED = 'true'
 $env:APP_ASR_PROVIDER = 'groq'
+$env:APP_LLM_PROVIDER = 'groq'
 $env:GROQ_API_KEY = '<local-secret>'
 ```
 
 The adapter sends only normalized audio to Groq Whisper and requests `verbose_json` segment
 timestamps. The downstream pipeline remains provider-independent.
+
+With `APP_LLM_PROVIDER=groq`, recipe extraction uses Groq `openai/gpt-oss-120b` with the
+versioned recipe JSON Schema and strict structured output.
 
 To run only the full pipeline scenario, use its Cucumber tag. The independent pipeline check is:
 

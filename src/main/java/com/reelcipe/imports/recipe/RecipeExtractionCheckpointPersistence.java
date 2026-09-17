@@ -85,6 +85,7 @@ public class RecipeExtractionCheckpointPersistence {
                 .orElseGet(() -> createCandidate(lease, snapshot, result));
         AiAttempt attempt = attempts.findById(started.id())
                 .orElseThrow(() -> new IllegalStateException("LLM attempt was not found"));
+        attempt.setProviderRequestId(result.providerRequestId(), clock);
         attempt.succeed(result.usage().inputUnits(), result.usage().outputUnits(), clock);
         attempts.save(attempt);
         com.reelcipe.providers.ProviderAdmissionService.ConsumeResult settlement = admissions.consume(
