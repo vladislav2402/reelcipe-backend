@@ -9,6 +9,7 @@ import com.reelcipe.common.UuidV7;
 import com.reelcipe.idempotency.IdempotencyService;
 import com.reelcipe.idempotency.domain.IdempotencyResult;
 import com.reelcipe.imports.domain.*;
+import com.reelcipe.imports.source.AudioAvailability;
 import com.reelcipe.imports.source.DescriptionAvailability;
 import com.reelcipe.imports.source.SourceAvailability;
 import com.reelcipe.recipes.domain.RecipeImportResult;
@@ -189,6 +190,8 @@ public class ImportService {
                 job.getMediaKind(), job.getFileName(), job.getContentType(), job.getExpectedSizeBytes(),
                 job.getDescriptionText(), job.getAuthorDescription(), job.getUserText(),
                 job.getSourceAvailability(), job.getDescriptionAvailability(),
+                job.getSourcePlatform(), job.getAuthorName(), job.getAuthorUrl(),
+                job.getAudioAvailability(),
                 job.getStatus(), job.getResumeStage(), job.getInputRevision(),
                 job.getAttempts(), job.getAttemptStage(), job.getStageAttempts(),
                 job.getNextAttemptAt(), job.getProcessingDeadlineAt(),
@@ -281,6 +284,10 @@ public class ImportService {
             String userText,
             SourceAvailability sourceAvailability,
             DescriptionAvailability descriptionAvailability,
+            String sourcePlatform,
+            String authorName,
+            String authorUrl,
+            AudioAvailability audioAvailability,
             ImportStatus status,
             ImportStage resumeStage,
             long inputRevision,

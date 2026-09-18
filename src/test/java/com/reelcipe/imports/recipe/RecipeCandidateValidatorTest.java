@@ -44,4 +44,19 @@ class RecipeCandidateValidatorTest {
 
         assertThat(validator.validate(json, snapshot).errors()).isEmpty();
     }
+
+    @Test
+    void rejectsEvidenceThatCombinesTranscriptFragmentsWithEllipses() {
+        RecipeCandidateValidator validator = new RecipeCandidateValidator(new ObjectMapper());
+        String json = new MockRecipeExtractor()
+                .extract(snapshot)
+                .candidateJson()
+                .replace("Boil pasta.", "Boil...pasta.");
+
+        RecipeCandidateValidator.Validation validation = validator.validate(json, snapshot);
+
+        assertThat(validation.valid()).isFalse();
+        assertThat(validation.errors())
+                .anyMatch(error -> error.contains("contiguous substring"));
+    }
 }

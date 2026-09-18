@@ -56,9 +56,16 @@ public class SourceResolverRegistry {
                     new SourceMetadata(
                             canonicalUrl(job),
                             null,
+                            null,
+                            null,
+                            null,
                             job.getUserText(),
                             SourceAvailability.UNAVAILABLE,
-                            DescriptionAvailability.PRESENT));
+                            DescriptionAvailability.USER_PROVIDED,
+                            AudioAvailability.UNAVAILABLE,
+                            null,
+                            null,
+                            null));
             return true;
         }
         throw new ImportProcessingException(ImportFailure.needsInput("SOURCE_PLATFORM_UNSUPPORTED"));

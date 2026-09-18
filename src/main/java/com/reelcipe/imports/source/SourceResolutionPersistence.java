@@ -66,10 +66,17 @@ public class SourceResolutionPersistence {
     private void recordMetadata(ImportJob job, SourceMetadata metadata) {
         job.recordSourceMetadata(
                 metadata.canonicalUrl() == null ? null : metadata.canonicalUrl().toString(),
+                metadata.platform(),
+                metadata.authorName(),
+                metadata.authorUrl(),
                 metadata.authorDescription(),
                 metadata.userText(),
                 metadata.availability(),
                 metadata.descriptionAvailability(),
+                metadata.audioAvailability(),
+                metadata.transcript(),
+                metadata.transcriptLanguage(),
+                metadata.transcriptProvider(),
                 clock);
     }
 

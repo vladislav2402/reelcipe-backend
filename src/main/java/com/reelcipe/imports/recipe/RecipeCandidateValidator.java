@@ -6,10 +6,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Component
 public class RecipeCandidateValidator {
@@ -123,7 +120,58 @@ public class RecipeCandidateValidator {
             }
             nullableSegmentIndex(item.get("segmentIndex"), snapshot, source, errors);
             text(item, "quote", 1, 1000, errors);
+            validateEvidenceQuote(
+                    source,
+                    item.get("segmentIndex"),
+                    item.get("quote"),
+                    snapshot,
+                    errors);
         }
+    }
+
+    private void validateEvidenceQuote(
+            JsonNode source,
+            JsonNode segmentIndex,
+            JsonNode quote,
+            RecipeTextSnapshot snapshot,
+            List<String> errors) {
+        if (source == null || !source.isTextual() || !SOURCES.contains(source.textValue())
+                || quote == null || !quote.isTextual()) {
+            return;
+        }
+        String sourceText;
+        if ("TRANSCRIPT".equals(source.textValue())) {
+            if (segmentIndex == null || segmentIndex.isNull()
+                    || !segmentIndex.canConvertToInt()) {
+                errors.add("transcript evidence requires a segment index");
+                return;
+            }
+            int index = segmentIndex.asInt();
+            sourceText = snapshot.transcriptSegments().stream()
+                    .filter(segment -> segment.index() == index)
+                    .map(RecipeTextSnapshot.TranscriptSegment::text)
+                    .findFirst()
+                    .orElse(null);
+        } else {
+            if (segmentIndex != null && !segmentIndex.isNull()) {
+                return;
+            }
+            sourceText = switch (source.textValue()) {
+                case "AUTHOR_DESCRIPTION" -> snapshot.authorDescription();
+                case "USER_TEXT" -> snapshot.userText();
+                default -> null;
+            };
+        }
+        if (!contains(sourceText, quote.textValue())) {
+            errors.add(
+                    "evidence quote must be one contiguous substring of its source "
+                            + "without paraphrasing or ellipses");
+        }
+    }
+
+    private boolean contains(String source, String quote) {
+        return source != null
+                && source.toLowerCase(Locale.ROOT).contains(quote.toLowerCase(Locale.ROOT));
     }
 
     private void nullableSegmentIndex(

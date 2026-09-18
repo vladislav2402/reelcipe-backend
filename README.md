@@ -53,6 +53,21 @@ timestamps. The downstream pipeline remains provider-independent.
 With `APP_LLM_PROVIDER=groq`, recipe extraction uses Groq `openai/gpt-oss-120b` with the
 versioned recipe JSON Schema and strict structured output.
 
+For TikTok LINK imports, the default resolver is the RapidAPI `7scorp` adapter. Configure
+the RapidAPI key only for the worker process and keep it local:
+
+```powershell
+$env:APP_ENABLED_LINK_PLATFORMS = 'tiktok'
+$env:APP_TIKTOK_RESOLVER_PROVIDER = 'rapidapi'
+$env:RAPIDAPI_TIKTOK_API_KEY = '<local-secret>'
+$env:RAPIDAPI_TIKTOK_HOST = 'tiktok-downloader-download-tiktok-videos-without-watermark.p.rapidapi.com'
+```
+
+Restart the worker after changing these variables. The adapter calls RapidAPI's
+`GET /vid/index?url=...` endpoint and passes the returned no-watermark video URL into the
+existing source resolver pipeline. Apify remains available with
+`APP_TIKTOK_RESOLVER_PROVIDER=apify` when `APIFY_API_TOKEN` is configured.
+
 To run only the full pipeline scenario, use its Cucumber tag. The independent pipeline check is:
 
 ```powershell

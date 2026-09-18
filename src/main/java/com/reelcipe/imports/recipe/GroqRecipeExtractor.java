@@ -250,6 +250,11 @@ public class GroqRecipeExtractor implements RecipeExtractor {
                 translating the cleaned instruction into the target language. Do not copy the
                 transcript word for word into the user-facing recipe fields; preserve only
                 evidence quotes verbatim.
+                Every evidence quote must be one contiguous substring copied from exactly one
+                source value or one transcript segment. Never combine distant fragments, never
+                insert ellipses such as "...", and never translate, paraphrase, or normalize an
+                evidence quote. Use multiple evidence items when a value is supported by more
+                than one separate fragment.
                 """;
         String source = sourceJson(snapshot);
         String correction = invalidJson == null

@@ -5,7 +5,6 @@ import com.reelcipe.imports.ImportProcessingException;
 import com.reelcipe.imports.domain.*;
 import com.reelcipe.storage.ObjectStorage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -25,31 +24,6 @@ public class HttpSourceResolver implements SourceResolver {
     private final Clock clock;
 
     @Autowired
-    public HttpSourceResolver(
-            ImportJobRepository jobs,
-            ObjectStorage storage,
-            SourceResolutionPersistence persistence,
-            Clock clock,
-            @Value("${app.providers.http.connect-timeout:PT5S}") java.time.Duration connectTimeout,
-            @Value("${app.import.source.read-timeout:PT60S}") java.time.Duration readTimeout,
-            @Value("${app.import.source.max-bytes:104857600}") long maxBytes,
-            @Value("${app.import.source.max-redirects:3}") int maxRedirects,
-            @Value("${app.import.source.temp-directory:${java.io.tmpdir}/reelcipe-source}") String tempDirectory,
-            @Value("${app.import.source.allow-local-addresses:false}") boolean allowLocalAddresses) {
-        this(
-                jobs,
-                storage,
-                persistence,
-                clock,
-                new ManagedHttpDownloader(
-                        new UrlSafetyPolicy(java.net.InetAddress::getAllByName, allowLocalAddresses),
-                        connectTimeout,
-                        readTimeout,
-                        maxBytes,
-                        maxRedirects,
-                        Path.of(tempDirectory)));
-    }
-
     public HttpSourceResolver(
             ImportJobRepository jobs,
             ObjectStorage storage,
@@ -120,9 +94,16 @@ public class HttpSourceResolver implements SourceResolver {
             SourceMetadata metadata = new SourceMetadata(
                     downloaded.canonicalUrl(),
                     null,
+                    null,
+                    null,
+                    null,
                     job.getUserText(),
                     SourceAvailability.AVAILABLE,
-                    descriptionAvailability(job));
+                    descriptionAvailability(job),
+                    AudioAvailability.AVAILABLE,
+                    null,
+                    null,
+                    null);
             persistence.media(
                     lease,
                     processingKey,
@@ -145,18 +126,32 @@ public class HttpSourceResolver implements SourceResolver {
         return new SourceMetadata(
                 canonicalUrl,
                 null,
+                null,
+                null,
+                null,
                 job.getUserText(),
                 SourceAvailability.PARTIAL,
-                descriptionAvailability(job));
+                descriptionAvailability(job),
+                AudioAvailability.UNAVAILABLE,
+                null,
+                null,
+                null);
     }
 
     private SourceMetadata unavailableDescriptionMetadata(ImportJob job) {
         return new SourceMetadata(
                 sourceUri(job),
                 null,
+                null,
+                null,
+                null,
                 job.getUserText(),
                 SourceAvailability.UNAVAILABLE,
-                descriptionAvailability(job));
+                descriptionAvailability(job),
+                AudioAvailability.UNAVAILABLE,
+                null,
+                null,
+                null);
     }
 
     private URI sourceUri(ImportJob job) {
@@ -165,7 +160,7 @@ public class HttpSourceResolver implements SourceResolver {
 
     private DescriptionAvailability descriptionAvailability(ImportJob job) {
         return hasUserText(job)
-                ? DescriptionAvailability.PRESENT
+                ? DescriptionAvailability.USER_PROVIDED
                 : DescriptionAvailability.UNAVAILABLE;
     }
 

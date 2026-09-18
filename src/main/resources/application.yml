@@ -96,6 +96,13 @@ app:
       max-redirects: ${APP_IMPORT_SOURCE_MAX_REDIRECTS:3}
       temp-directory: ${APP_IMPORT_SOURCE_TEMP_DIRECTORY:${java.io.tmpdir}/reelcipe-source}
       allow-local-addresses: ${APP_IMPORT_SOURCE_ALLOW_LOCAL_ADDRESSES:false}
+      allow-non-standard-ports: ${APP_IMPORT_SOURCE_ALLOW_NON_STANDARD_PORTS:false}
+    tiktok:
+      provider: ${APP_TIKTOK_RESOLVER_PROVIDER:rapidapi}
+      rapidapi-base-url: ${APP_RAPIDAPI_TIKTOK_BASE_URL:https://tiktok-downloader-download-tiktok-videos-without-watermark.p.rapidapi.com}
+      apify-api-base-url: ${APP_APIFY_API_BASE_URL:https://api.apify.com/v2}
+      timeout: ${APP_TIKTOK_RESOLVER_TIMEOUT:PT120S}
+      max-response-bytes: ${APP_TIKTOK_RESOLVER_MAX_RESPONSE_BYTES:10485760}
   storage:
     provider: ${APP_STORAGE_PROVIDER:s3}
     endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9090}
@@ -128,7 +135,7 @@ app:
     prompt-version: ${APP_LLM_PROMPT_VERSION:recipe-extraction-v1}
     schema-version: ${APP_LLM_SCHEMA_VERSION:recipe-extraction-v1}
     pipeline-version: ${APP_LLM_PIPELINE_VERSION:b21-v1}
-    target-language: ${APP_LLM_TARGET_LANGUAGE:en}
+    target-language: ${APP_LLM_TARGET_LANGUAGE:uk}
     corrective-retry-limit: ${APP_LLM_CORRECTIVE_RETRY_LIMIT:1}
   features:
     share-extension: ${APP_FEATURE_SHARE_EXTENSION:false}

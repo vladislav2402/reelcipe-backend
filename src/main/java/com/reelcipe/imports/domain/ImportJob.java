@@ -1,5 +1,6 @@
 package com.reelcipe.imports.domain;
 
+import com.reelcipe.imports.source.AudioAvailability;
 import com.reelcipe.imports.source.DescriptionAvailability;
 import com.reelcipe.imports.source.SourceAvailability;
 import jakarta.persistence.*;
@@ -54,6 +55,12 @@ public class ImportJob {
     private String sourceUrl;
     @Column(name = "canonical_source_url")
     private String canonicalSourceUrl;
+    @Column(name = "source_platform")
+    private String sourcePlatform;
+    @Column(name = "author_name")
+    private String authorName;
+    @Column(name = "author_url")
+    private String authorUrl;
     @Enumerated(EnumType.STRING)
     @Column(name = "media_kind")
     private ImportMediaKind mediaKind;
@@ -75,6 +82,15 @@ public class ImportJob {
     @Enumerated(EnumType.STRING)
     @Column(name = "description_availability")
     private DescriptionAvailability descriptionAvailability;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "audio_availability")
+    private AudioAvailability audioAvailability;
+    @Column(name = "external_transcript")
+    private String externalTranscript;
+    @Column(name = "external_transcript_language")
+    private String externalTranscriptLanguage;
+    @Column(name = "external_transcript_provider")
+    private String externalTranscriptProvider;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ImportStatus status;
@@ -170,7 +186,8 @@ public class ImportJob {
         this.sourceAvailability = SourceAvailability.UNKNOWN;
         this.descriptionAvailability = descriptionText == null || descriptionText.isBlank()
                 ? DescriptionAvailability.EMPTY
-                : DescriptionAvailability.PRESENT;
+                : DescriptionAvailability.USER_PROVIDED;
+        this.audioAvailability = AudioAvailability.UNAVAILABLE;
         this.inputHash = inputHash;
         this.inputRevision = 1;
         this.status = status;
@@ -294,6 +311,9 @@ public class ImportJob {
             audioCheckpointRef = null;
             audioOutcome = null;
             transcriptCheckpointRef = null;
+            externalTranscript = null;
+            externalTranscriptLanguage = null;
+            externalTranscriptProvider = null;
         }
         status = ImportStatus.QUEUED;
         nextAttemptAt = clock.instant();
@@ -426,6 +446,18 @@ public class ImportJob {
         return canonicalSourceUrl;
     }
 
+    public String getSourcePlatform() {
+        return sourcePlatform;
+    }
+
+    public String getAuthorName() {
+        return authorName;
+    }
+
+    public String getAuthorUrl() {
+        return authorUrl;
+    }
+
     public ImportMediaKind getMediaKind() {
         return mediaKind;
     }
@@ -467,18 +499,48 @@ public class ImportJob {
                 : DescriptionAvailability.PRESENT;
     }
 
+    public AudioAvailability getAudioAvailability() {
+        return audioAvailability == null ? AudioAvailability.UNAVAILABLE : audioAvailability;
+    }
+
+    public String getExternalTranscript() {
+        return externalTranscript;
+    }
+
+    public String getExternalTranscriptLanguage() {
+        return externalTranscriptLanguage;
+    }
+
+    public String getExternalTranscriptProvider() {
+        return externalTranscriptProvider;
+    }
+
     public void recordSourceMetadata(
             String canonicalUrl,
+            String platform,
+            String authorName,
+            String authorUrl,
             String authorDescription,
             String userText,
             SourceAvailability availability,
             DescriptionAvailability descriptionAvailability,
+            AudioAvailability audioAvailability,
+            String externalTranscript,
+            String externalTranscriptLanguage,
+            String externalTranscriptProvider,
             Clock clock) {
         this.canonicalSourceUrl = canonicalUrl;
+        this.sourcePlatform = platform;
+        this.authorName = authorName;
+        this.authorUrl = authorUrl;
         this.authorDescription = authorDescription;
         this.userText = userText;
         this.sourceAvailability = availability;
         this.descriptionAvailability = descriptionAvailability;
+        this.audioAvailability = audioAvailability;
+        this.externalTranscript = externalTranscript;
+        this.externalTranscriptLanguage = externalTranscriptLanguage;
+        this.externalTranscriptProvider = externalTranscriptProvider;
         this.updatedAt = clock.instant();
     }
 

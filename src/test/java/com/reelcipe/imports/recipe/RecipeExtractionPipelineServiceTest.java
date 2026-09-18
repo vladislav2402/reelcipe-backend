@@ -103,7 +103,7 @@ class RecipeExtractionPipelineServiceTest {
         return "{\"title\":\"Pasta\",\"language\":\"EN\","
                 + "\"description\":\"Boil pasta.\",\"ingredients\":[],"
                 + "\"steps\":[{\"position\":1,\"text\":\"Boil pasta.\","
-                + "\"evidence\":[{\"source\":\"AUTHOR_DESCRIPTION\","
+                + "\"evidence\":[{\"source\":\"USER_TEXT\","
                 + "\"segmentIndex\":null,\"quote\":\"Boil pasta.\"}]}]}";
     }
 }

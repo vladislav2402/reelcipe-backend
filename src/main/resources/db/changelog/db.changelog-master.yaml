@@ -62,3 +62,9 @@ databaseChangeLog:
   - include:
       file: changes/021-source-metadata.xml
       relativeToChangelogFile: true
+  - include:
+      file: changes/022-source-attribution.xml
+      relativeToChangelogFile: true
+  - include:
+      file: changes/023-external-transcript.xml
+      relativeToChangelogFile: true

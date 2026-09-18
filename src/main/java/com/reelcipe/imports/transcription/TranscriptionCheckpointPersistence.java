@@ -54,6 +54,51 @@ public class TranscriptionCheckpointPersistence {
 
     @Transactional
     public StartedAttempt start(ImportLease lease, String inputHash) {
+        return start(lease, inputHash, provider, model);
+    }
+
+    @Transactional
+    public Transcription checkpointExternal(
+            ImportLease lease,
+            UUID audioAssetId,
+            String audioProcessingKey,
+            String inputHash,
+            int durationSeconds,
+            String transcript,
+            String transcriptLanguage,
+            String transcriptProvider) {
+        String resolvedProvider = transcriptProvider == null || transcriptProvider.isBlank()
+                ? "external"
+                : transcriptProvider;
+        StartedAttempt started = start(
+                lease,
+                inputHash,
+                resolvedProvider,
+                "tiktok-native-captions");
+        String language = transcriptLanguage == null || transcriptLanguage.isBlank()
+                ? "uk"
+                : transcriptLanguage;
+        long endMs = Math.max(1, durationSeconds) * 1000L;
+        SpeechTranscriber.Result result = new SpeechTranscriber.Result(
+                language,
+                SpeechStatus.SPEECH,
+                java.util.List.of(new SpeechTranscriber.Segment(0, endMs, transcript.trim())),
+                new SpeechTranscriber.Usage(durationSeconds, 0));
+        return checkpoint(
+                lease,
+                started,
+                audioAssetId,
+                audioProcessingKey,
+                inputHash,
+                durationSeconds,
+                result);
+    }
+
+    private StartedAttempt start(
+            ImportLease lease,
+            String inputHash,
+            String attemptProvider,
+            String attemptModel) {
         fencedJob(lease);
         int nextAttempt = attempts.findTopByImportIdAndKindOrderByAttemptNumberDesc(
                         lease.importId(), AiAttemptKind.ASR)
@@ -65,7 +110,7 @@ public class TranscriptionCheckpointPersistence {
                         attemptId,
                         lease.importId(),
                         lease.userId(),
-                        provider,
+                        attemptProvider,
                         "ASR",
                         estimateUnits(lease, inputHash)));
         AiAttempt attempt = new AiAttempt(
@@ -75,12 +120,16 @@ public class TranscriptionCheckpointPersistence {
                 AiAttemptKind.ASR,
                 nextAttempt,
                 inputHash,
-                provider,
-                model,
+                attemptProvider,
+                attemptModel,
                 reservation.id(),
                 clock.instant());
         attempts.save(attempt);
-        return new StartedAttempt(attempt.getId(), provider, model, reservation.id());
+        return new StartedAttempt(
+                attempt.getId(),
+                attemptProvider,
+                attemptModel,
+                reservation.id());
     }
 
     @Transactional
@@ -102,7 +151,9 @@ public class TranscriptionCheckpointPersistence {
                         audioAssetId,
                         inputHash,
                         durationSeconds,
-                        result));
+                        result,
+                        started.provider(),
+                        started.model()));
         AiAttempt attempt = attempts.findById(started.id())
                 .orElseThrow(() -> new IllegalStateException("ASR attempt was not found"));
         attempt.succeed(result.usage().inputSeconds(), result.usage().units(), clock);
@@ -172,7 +223,9 @@ public class TranscriptionCheckpointPersistence {
             UUID audioAssetId,
             String inputHash,
             int durationSeconds,
-            SpeechTranscriber.Result result) {
+            SpeechTranscriber.Result result,
+            String transcriptionProvider,
+            String transcriptionModel) {
         validateResult(result, durationSeconds);
         int version = transcriptions.findTopByImportIdOrderByVersionDesc(lease.importId())
                 .map(transcription -> transcription.getVersion() + 1)
@@ -194,8 +247,8 @@ public class TranscriptionCheckpointPersistence {
                 transcriptHash,
                 fullText,
                 durationSeconds,
-                provider,
-                model,
+                transcriptionProvider,
+                transcriptionModel,
                 result.providerRequestId(),
                 clock.instant());
         transcriptions.save(transcription);

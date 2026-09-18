@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TikTok resolver provider response",
+  "type": "object",
+  "required": ["canonicalUrl", "descriptionStatus", "audioStatus"],
+  "properties": {
+    "canonicalUrl": {"type": "string", "format": "uri"},
+    "authorName": {"type": ["string", "null"]},
+    "authorUrl": {"type": ["string", "null"], "format": "uri"},
+    "description": {"type": ["string", "null"]},
+    "descriptionStatus": {
+      "enum": ["AVAILABLE", "EMPTY", "UNAVAILABLE"]
+    },
+    "audioStatus": {
+      "enum": ["AVAILABLE", "MISSING", "UNAVAILABLE"]
+    },
+    "mediaKind": {
+      "enum": ["FULL_POST_AUDIO", "VIDEO_FOR_AUDIO", "MUSIC_ONLY", null]
+    },
+    "audioUrl": {"type": ["string", "null"], "format": "uri"},
+    "videoUrl": {"type": ["string", "null"], "format": "uri"}
+  },
+  "additionalProperties": false
+}

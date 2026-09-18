@@ -4,9 +4,13 @@ import com.reelcipe.common.UuidV7;
 import com.reelcipe.imports.ImportLeaseControl;
 import com.reelcipe.imports.ImportProcessingException;
 import com.reelcipe.imports.domain.*;
+import com.reelcipe.imports.source.AudioAvailability;
+import com.reelcipe.imports.source.DescriptionAvailability;
+import com.reelcipe.imports.source.SourceAvailability;
 import com.reelcipe.imports.transcription.domain.SpeechStatus;
 import com.reelcipe.imports.transcription.domain.TranscriptionRepository;
 import com.reelcipe.storage.InMemoryObjectStorage;
+import com.reelcipe.storage.ObjectStorage;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -98,6 +102,76 @@ class TranscriptionPipelineServiceTest {
         verify(checkpoints).markUnknown(any(), eq(attemptId), eq("ASR_TIMEOUT"));
         verify(checkpoints, never()).checkpoint(
                 any(), any(), any(), any(), any(), anyInt(), any());
+    }
+
+    @Test
+    void checkpointsNativeTranscriptWithoutCallingSpeechProvider() {
+        UUID importId = UuidV7.randomUuid();
+        UUID userId = UuidV7.randomUuid();
+        MediaAsset audio = audio(importId);
+        ImportJob job = new ImportJob(
+                importId,
+                userId,
+                UuidV7.randomUuid(),
+                ImportSourceType.LINK,
+                "https://www.tiktok.com/@cook/video/123",
+                ImportMediaKind.VIDEO,
+                null,
+                "video/mp4",
+                100L,
+                null,
+                "input-hash",
+                ImportStatus.TRANSCRIBING,
+                ImportStage.TRANSCRIBING,
+                NOW.plusSeconds(3600),
+                null,
+                NOW);
+        job.recordSourceMetadata(
+                "https://www.tiktok.com/@cook/video/123",
+                "TIKTOK",
+                "cook",
+                "https://www.tiktok.com/@cook",
+                null,
+                null,
+                SourceAvailability.AVAILABLE,
+                DescriptionAvailability.EMPTY,
+                AudioAvailability.AVAILABLE,
+                "Cut the apples into cubes.",
+                "uk",
+                "apify",
+                java.time.Clock.fixed(NOW, java.time.ZoneOffset.UTC));
+        ImportJobRepository jobs = mock(ImportJobRepository.class);
+        when(jobs.findFencedForUpdate(importId, "worker-1", 1, 1))
+                .thenReturn(Optional.of(job));
+        MediaAssetRepository assets = mock(MediaAssetRepository.class);
+        when(assets.findByImportIdAndAssetType(importId, MediaAssetType.NORMALIZED_AUDIO))
+                .thenReturn(Optional.of(audio));
+        TranscriptionRepository transcriptions = mock(TranscriptionRepository.class);
+        TranscriptionCheckpointPersistence checkpoints = mock(
+                TranscriptionCheckpointPersistence.class);
+        SpeechTranscriber transcriber = mock(SpeechTranscriber.class);
+
+        TranscriptionPipelineService service = new TranscriptionPipelineService(
+                jobs,
+                assets,
+                transcriptions,
+                mock(ObjectStorage.class),
+                transcriber,
+                checkpoints,
+                "uk");
+
+        service.transcribe(lease(importId), new ImportLeaseControl());
+
+        verify(checkpoints).checkpointExternal(
+                any(),
+                eq(audio.getId()),
+                eq(audio.getProcessingKey()),
+                eq(audio.getSha256()),
+                eq(4),
+                eq("Cut the apples into cubes."),
+                eq("uk"),
+                eq("apify"));
+        verifyNoInteractions(transcriber);
     }
 
     private MediaAsset audio(UUID importId) {

@@ -16,6 +16,7 @@ import java.io.InputStream;
 @Service
 @ConditionalOnProperty(name = "app.role", havingValue = "worker")
 public class TranscriptionPipelineService {
+    private final ImportJobRepository jobs;
     private final MediaAssetRepository assets;
     private final TranscriptionRepository transcriptions;
     private final ObjectStorage storage;
@@ -25,12 +26,14 @@ public class TranscriptionPipelineService {
 
     @Autowired
     public TranscriptionPipelineService(
+            ImportJobRepository jobs,
             MediaAssetRepository assets,
             TranscriptionRepository transcriptions,
             ObjectStorage storage,
             SpeechTranscriber transcriber,
             TranscriptionCheckpointPersistence checkpoints,
             @Value("${app.asr.language:uk}") String language) {
+        this.jobs = jobs;
         this.assets = assets;
         this.transcriptions = transcriptions;
         this.storage = storage;
@@ -45,7 +48,7 @@ public class TranscriptionPipelineService {
             ObjectStorage storage,
             SpeechTranscriber transcriber,
             TranscriptionCheckpointPersistence checkpoints) {
-        this(assets, transcriptions, storage, transcriber, checkpoints, "uk");
+        this(null, assets, transcriptions, storage, transcriber, checkpoints, "uk");
     }
 
     public void transcribe(ImportLease lease, ImportLeaseControl control) {
@@ -58,12 +61,29 @@ public class TranscriptionPipelineService {
         if (audio.getProcessingKey() == null || audio.getSha256() == null) {
             throw transientError("NORMALIZED_AUDIO_NOT_READY");
         }
+        ImportJob job = externalTranscriptJob(lease);
         Transcription saved = transcriptions
                 .findTopByImportIdAndAudioAssetIdOrderByVersionDesc(
                         lease.importId(), audio.getId())
                 .orElse(null);
         if (saved != null && saved.getInputHash().equals(audio.getSha256())) {
             checkpoints.reuse(lease, saved, audio.getProcessingKey());
+            return;
+        }
+
+        if (job != null && hasExternalTranscript(job)) {
+            if (!control.isValid()) {
+                throw new LeaseLostException(lease);
+            }
+            checkpoints.checkpointExternal(
+                    lease,
+                    audio.getId(),
+                    audio.getProcessingKey(),
+                    audio.getSha256(),
+                    audio.getDurationSeconds() == null ? 0 : audio.getDurationSeconds(),
+                    job.getExternalTranscript(),
+                    job.getExternalTranscriptLanguage(),
+                    job.getExternalTranscriptProvider());
             return;
         }
 
@@ -141,5 +161,22 @@ public class TranscriptionPipelineService {
 
     private ImportProcessingException transientError(String code, Throwable cause) {
         return new ImportProcessingException(ImportFailure.transientError(code), cause);
+    }
+
+    private ImportJob externalTranscriptJob(ImportLease lease) {
+        if (jobs == null) {
+            return null;
+        }
+        return jobs.findFencedForUpdate(
+                        lease.importId(),
+                        lease.owner(),
+                        lease.leaseVersion(),
+                        lease.inputRevision())
+                .orElseThrow(() -> new LeaseLostException(lease));
+    }
+
+    private boolean hasExternalTranscript(ImportJob job) {
+        return job.getExternalTranscript() != null
+                && !job.getExternalTranscript().isBlank();
     }
 }

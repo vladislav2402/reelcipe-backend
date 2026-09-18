@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+    <changeSet id="022-source-attribution" author="reelcipe">
+        <addColumn tableName="import_jobs">
+            <column name="source_platform" type="VARCHAR(32)"/>
+            <column name="author_name" type="VARCHAR(255)"/>
+            <column name="author_url" type="VARCHAR(2000)"/>
+            <column name="audio_availability" type="VARCHAR(32)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
